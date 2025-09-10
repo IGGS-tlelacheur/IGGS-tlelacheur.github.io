@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Pseudocode Animator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Consolas', 'Monaco', monospace;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            padding: 20px;
+            min-height: 600px;
+        }
+
+        .input-panel {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            border: 2px solid #e9ecef;
+        }
+
+        .pseudocode-panel {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            border: 2px solid #e9ecef;
+        }
+
+        .variables-panel {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            border: 2px solid #e9ecef;
+        }
+
+        .panel-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #2c3e50;
+            text-align: center;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        .code-input {
+            width: 100%;
+            height: 400px;
+            font-family: 'Consolas', monospace;
+            font-size: 14px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            resize: vertical;
+            background: #fff;
+            line-height: 1.5;
+        }
+
+        .code-input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 10px rgba(52, 152, 219, 0.2);
+        }
+
+        .validation-message {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .validation-message.error {
+            background: #fee;
+            border: 1px solid #fcc;
+            color: #c33;
+        }
+
+        .validation-message.success {
+            background: #efe;
+            border: 1px solid #cfc;
+            color: #3c3;
+        }
+
+        .validation-message.warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+
+        .pseudocode-line {
+            padding: 8px 12px;
+            margin: 2px 0;
+            border-radius: 5px;
+            border-left: 4px solid transparent;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .pseudocode-line.current {
+            background: #ffeaa7;
+            border-left-color: #fdcb6e;
+            box-shadow: 0 2px 8px rgba(253, 203, 110, 0.3);
+            transform: translateX(5px);
+        }
+
+        .pseudocode-line.completed {
+            background: #d1f2eb;
+            border-left-color: #00b894;
+            opacity: 0.7;
+        }
+
+        .pseudocode-line.error {
+            background: #ffebee;
+            border-left-color: #f44336;
+            color: #c62828;
+        }
+
+        .variable-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            margin: 5px 0;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+            transition: all 0.3s ease;
+        }
+
+        .variable-item.updated {
+            border-color: #e17055;
+            background: #ffeaa7;
+            transform: scale(1.02);
+            box-shadow: 0 3px 10px rgba(225, 112, 85, 0.2);
+        }
+
+        .variable-name {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .variable-value {
+            font-weight: bold;
+            color: #e17055;
+            font-size: 1.1rem;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 20px;
+            border-radius: 15px;
+            width: 80%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            margin: -20px -20px 20px -20px;
+            padding: 20px;
+            border-radius: 15px 15px 0 0;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        .close {
+            color: white;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .close:hover {
+            opacity: 0.7;
+        }
+
+        .keyword-section {
+            margin-bottom: 25px;
+        }
+
+        .keyword-section h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 5px;
+        }
+
+        .keyword-item {
+            background: #f8f9fa;
+            margin: 8px 0;
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+        }
+
+        .keyword-syntax {
+            font-family: 'Consolas', monospace;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .keyword-description {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .keyword-example {
+            font-family: 'Consolas', monospace;
+            background: #e8f4f8;
+            padding: 8px;
+            border-radius: 4px;
+            margin-top: 8px;
+            font-size: 13px;
+            border: 1px solid #d4e6ea;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #74b9ff, #0984e3);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(116, 185, 255, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #a29bfe, #6c5ce7);
+            color: white;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(162, 155, 254, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #00b894, #00a085);
+            color: white;
+        }
+
+        .btn-success:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 184, 148, 0.4);
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, #17a2b8, #138496);
+            color: white;
+        }
+
+        .btn-info:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(23, 162, 184, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .output {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-family: 'Consolas', monospace;
+            min-height: 60px;
+            border: 2px solid #4a5568;
+        }
+
+        .output-title {
+            color: #81c784;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .examples {
+            margin-top: 15px;
+        }
+
+        .example-btn {
+            display: block;
+            width: 100%;
+            margin-bottom: 8px;
+            padding: 8px 12px;
+            background: #e3f2fd;
+            border: 1px solid #90caf9;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s ease;
+        }
+
+        .example-btn:hover {
+            background: #bbdefb;
+        }
+
+        .help-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 10px;
+            line-height: 1.4;
+        }
+
+        @media (max-width: 1024px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Custom Pseudocode Animator</h1>
+            <p>Write your own pseudocode and watch it execute step by step</p>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-success" id="parseBtn">Parse Code</button>
+            <button class="btn btn-primary" id="startBtn" disabled>Start</button>
+            <button class="btn btn-primary" id="nextBtn" disabled>Next Step</button>
+            <button class="btn btn-secondary" id="resetBtn">Reset</button>
+            <button class="btn btn-primary" id="autoBtn" disabled>Auto Run</button>
+            <button class="btn btn-info" id="helpBtn">📖 Help & Keywords</button>
+        </div>
+
+        <div class="content">
+            <div class="input-panel">
+                <div class="panel-title">Write Your Pseudocode</div>
+                <textarea id="codeInput" class="code-input" placeholder="Enter your pseudocode here...
+
+Example:
+SET x = 5
+SET y = 10
+SET sum = x + y
+OUTPUT sum
+
+Supported commands:
+• SET variable = value
+• PRINT variable/value
+• OUTPUT variable/value
+• IF condition THEN ... END IF
+• WHILE condition DO ... END WHILE
+• FOR variable = start TO end DO ... END FOR"></textarea>
+                <div id="validationMessage" class="validation-message"></div>
+                
+                <div class="examples">
+                    <div style="font-weight: bold; margin-bottom: 8px; color: #2c3e50;">Quick Examples:</div>
+                    <button class="example-btn" data-example="simple">Simple Calculation</button>
+                    <button class="example-btn" data-example="loop">While Loop</button>
+                    <button class="example-btn" data-example="factorial">Factorial</button>
+                    <button class="example-btn" data-example="array">Array Processing</button>
+                </div>
+                
+                <div class="help-text">
+                    <strong>Tip:</strong> Use simple variable names and standard operators (+, -, *, /, >, <, =, >=, <=). 
+                    Arrays use [brackets] and indexing like arr[0].
+                </div>
+            </div>
+
+            <div class="pseudocode-panel">
+                <div class="panel-title">Processed Code</div>
+                <div id="pseudocode"></div>
+                <div class="output">
+                    <div class="output-title">Output:</div>
+                    <div id="output"></div>
+                </div>
+            </div>
+
+            <div class="variables-panel">
+                <div class="panel-title">Variables</div>
+                <div id="variables"></div>
+            </div>
+        </div>
+
+        <!-- Help Modal -->
+        <div id="helpModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <span class="close">&times;</span>
+                    <h2>Pseudocode Keywords & Syntax Guide</h2>
+                </div>
+
+                <div class="keyword-section">
+                    <h3>Variable Operations</h3>
+                    
+                    <div class="keyword-item">
+                        <div class="keyword-syntax">SET variable = value</div>
+                        <div class="keyword-description">Assigns a value to a variable. The value can be a number, string, or expression.</div>
+                        <div class="keyword-example">SET x = 5<br>SET name = "Alice"<br>SET sum = x + y</div>
+                    </div>
+                </div>
+
+                <div class="keyword-section">
+                    <h3>Output Commands</h3>
+                    
+                    <div class="keyword-item">
+                        <div class="keyword-syntax">OUTPUT expression</div>
+                        <div class="keyword-description">Displays the value of an expression or variable.</div>
+                        <div class="keyword-example">OUTPUT x<br>OUTPUT "Hello World"<br>OUTPUT "Result: " + sum</div>
+                    </div>
+
+                    <div class="keyword-item">
+                        <div class="keyword-syntax">PRINT expression</div>
+                        <div class="keyword-description">Same as OUTPUT - displays the value of an expression or variable.</div>
+                        <div class="keyword-example">PRINT x<br>PRINT "Hello World"<br>PRINT "Result: " + sum</div>
+                    </div>
+                </div>
+
+                <div class="keyword-section">
+                    <h3>Conditional Statements</h3>
+                    
+                    <div class="keyword-item">
+                        <div class="keyword-syntax">IF condition THEN<br>&nbsp;&nbsp;&nbsp;&nbsp;statements<br>END IF</div>
+                        <div class="keyword-description">Executes statements only if the condition is true.</div>
+                        <div class="keyword-example">IF x > 5 THEN<br>&nbsp;&nbsp;&nbsp;&nbsp;PRINT "x is greater than 5"<br>END IF</div>
+                    </div>
+                </div>
+
+                <div class="keyword-section">
+                    <h3>Loop Statements</h3>
+                    
+                    <div class="keyword-item">
+                        <div class="keyword-syntax">WHILE condition DO<br>&nbsp;&nbsp;&nbsp;&nbsp;statements<br>END WHILE</div>
+                        <div class="keyword-description">Repeats statements while the condition remains true.</div>
+                        <div class="keyword-example">WHILE count < 10 DO<br>&nbsp;&nbsp;&nbsp;&nbsp;PRINT count<br>&nbsp;&nbsp;&nbsp;&nbsp;SET count = count + 1<br>END WHILE</div>
+                    </div>
+
+                    <div class="keyword-item">
+                        <div class="keyword-syntax">FOR variable = start TO end DO<br>&nbsp;&nbsp;&nbsp;&nbsp;statements<br>END FOR</div>
+                        <div class="keyword-description">Repeats statements with a counter variable from start to end.</div>
+                        <div class="keyword-example">FOR i = 1 TO 5 DO<br>&nbsp;&nbsp;&nbsp;&nbsp;PRINT i<br>END FOR</div>
+                    </div>
+                </div>
+
+                <div class="keyword-section">
+                    <h3>Data Types & Operations</h3>
+                    
+                    <div class="keyword-item">
+                        <div class="keyword-syntax">Numbers</div>
+                        <div class="keyword-description">Whole numbers (5, -3) or decimals (3.14, -2.5)</div>
+                        <div class="keyword-example">SET age = 16<br>SET pi = 3.14159</div>
+                    </div>
+
+                    <div class="keyword-item">
+                        <div class="keyword-syntax">Strings</div>
+                        <div class="keyword-description">Text enclosed in double quotes. Use + for concatenation.</div>
+                        <div class="keyword-example">SET message = "Hello"<br>SET greeting = "Hi " + name</div>
+                    </div>
+
+                    <div class="keyword-item">
+                        <div class="keyword-syntax">Arrays</div>
+                        <div class="keyword-description">Lists of values in square brackets. Access elements with [index].</div>
+                        <div class="keyword-example">SET numbers = [1, 2, 3, 4, 5]<br>SET first = numbers[0]</div>
+                    </div>
+                </div>
+
+                <div class="keyword-section">
+                    <h3>Comparison Operators</h3>
+                    
+                    <div class="keyword-item">
+                        <div class="keyword-syntax">= &nbsp;&nbsp; > &nbsp;&nbsp; < &nbsp;&nbsp; >= &nbsp;&nbsp; <=</div>
+                        <div class="keyword-description">Equal to, greater than, less than, greater than or equal, less than or equal</div>
+                        <div class="keyword-example">IF age >= 18 THEN<br>IF score = 100 THEN<br>IF temperature < 0 THEN</div>
+                    </div>
+                </div>
+
+                <div class="keyword-section">
+                    <h3>Arithmetic Operators</h3>
+                    
+                    <div class="keyword-item">
+                        <div class="keyword-syntax">+ &nbsp;&nbsp; - &nbsp;&nbsp; * &nbsp;&nbsp; /</div>
+                        <div class="keyword-description">Addition, subtraction, multiplication, division</div>
+                        <div class="keyword-example">SET result = x + y * 2<br>SET average = total / count</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class CustomPseudocodeAnimator {
+            constructor() {
+                this.currentStep = -1;
+                this.isRunning = false;
+                this.autoRunning = false;
+                this.variables = {};
+                this.output = [];
+                this.parsedCode = [];
+                this.executionContext = {
+                    loopStacks: [],
+                    skipMode: false,
+                    skipUntil: null
+                };
+                
+                this.examples = {
+                    simple: `SET x = 5
+SET y = 10
+SET sum = x + y
+PRINT "The sum is: " + sum`,
+                    
+                    loop: `SET count = 0
+SET total = 0
+WHILE count < 5 DO
+    SET total = total + count
+    SET count = count + 1
+END WHILE
+PRINT "Total: " + total`,
+
+                    factorial: `SET n = 5
+SET factorial = 1
+SET i = 1
+WHILE i <= n DO
+    SET factorial = factorial * i
+    SET i = i + 1
+END WHILE
+PRINT "Factorial of " + n + " is " + factorial`,
+
+                    array: `SET numbers = [3, 7, 2, 9, 1]
+SET max = numbers[0]
+SET i = 1
+WHILE i < 5 DO
+    IF numbers[i] > max THEN
+        SET max = numbers[i]
+    END IF
+    SET i = i + 1
+END WHILE
+PRINT "Maximum: " + max`
+                };
+                
+                this.initializeEventListeners();
+            }
+
+            initializeEventListeners() {
+                document.getElementById('parseBtn').addEventListener('click', () => this.parseCode());
+                document.getElementById('startBtn').addEventListener('click', () => this.start());
+                document.getElementById('nextBtn').addEventListener('click', () => this.nextStep());
+                document.getElementById('resetBtn').addEventListener('click', () => this.reset());
+                document.getElementById('autoBtn').addEventListener('click', () => this.toggleAutoRun());
+                document.getElementById('helpBtn').addEventListener('click', () => this.showHelp());
+                
+                // Modal event listeners
+                const modal = document.getElementById('helpModal');
+                const closeBtn = document.querySelector('.close');
+                
+                closeBtn.addEventListener('click', () => {
+                    modal.style.display = 'none';
+                });
+                
+                window.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.style.display = 'none';
+                    }
+                });
+                
+                document.querySelectorAll('.example-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const example = e.target.dataset.example;
+                        document.getElementById('codeInput').value = this.examples[example];
+                        this.parseCode();
+                    });
+                });
+            }
+
+            cleanInput(input) {
+                // Remove extra whitespace and normalize line endings
+                let cleaned = input.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+                
+                // Split into lines and clean each line
+                let lines = cleaned.split('\n').map(line => {
+                    // Remove leading/trailing whitespace
+                    line = line.trim();
+                    
+                    // Normalize keywords to uppercase
+                    line = line.replace(/\b(set|if|then|else|end|while|do|for|to|output|print|input)\b/gi, 
+                        match => match.toUpperCase());
+                    
+                    // Fix common spacing issues
+                    line = line.replace(/\s*=\s*/g, ' = ');
+                    line = line.replace(/\s*\+\s*/g, ' + ');
+                    line = line.replace(/\s*-\s*/g, ' - ');
+                    line = line.replace(/\s*\*\s*/g, ' * ');
+                    line = line.replace(/\s*\/\s*/g, ' / ');
+                    line = line.replace(/\s*>\s*/g, ' > ');
+                    line = line.replace(/\s*<\s*/g, ' < ');
+                    line = line.replace(/\s*>=\s*/g, ' >= ');
+                    line = line.replace(/\s*<=\s*/g, ' <= ');
+                    
+                    return line;
+                }).filter(line => line.length > 0); // Remove empty lines
+                
+                return lines;
+            }
+
+            validateCode(lines) {
+                const errors = [];
+                const warnings = [];
+                let indentLevel = 0;
+                const blockStack = [];
+
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i];
+                    const lineNum = i + 1;
+
+                    // Check for basic syntax
+                    if (line.startsWith('SET ')) {
+                        if (!line.includes(' = ')) {
+                            errors.push(`Line ${lineNum}: SET statements must use '=' assignment`);
+                        }
+                    } else if (line.startsWith('IF ')) {
+                        if (!line.includes(' THEN')) {
+                            errors.push(`Line ${lineNum}: IF statements must end with THEN`);
+                        }
+                        blockStack.push('IF');
+                    } else if (line.startsWith('WHILE ')) {
+                        if (!line.includes(' DO')) {
+                            errors.push(`Line ${lineNum}: WHILE statements must end with DO`);
+                        }
+                        blockStack.push('WHILE');
+                    } else if (line.startsWith('FOR ')) {
+                        if (!line.includes(' TO ') || !line.includes(' DO')) {
+                            errors.push(`Line ${lineNum}: FOR statements must have format 'FOR var = start TO end DO'`);
+                        }
+                        blockStack.push('FOR');
+                    } else if (line === 'END IF' || line === 'END WHILE' || line === 'END FOR') {
+                        if (blockStack.length === 0) {
+                            errors.push(`Line ${lineNum}: Unexpected END statement`);
+                        } else {
+                            const expectedEnd = blockStack.pop();
+                            const actualEnd = line.split(' ')[1];
+                            if (expectedEnd !== actualEnd) {
+                                warnings.push(`Line ${lineNum}: Expected 'END ${expectedEnd}' but found '${line}'`);
+                            }
+                        }
+                    } else if (line.startsWith('OUTPUT ')) {
+                        // Valid output statement
+                    } else if (line.startsWith('PRINT ')) {
+                        // Valid print statement
+                    } else {
+                        warnings.push(`Line ${lineNum}: Unknown command format: ${line}`);
+                    }
+                }
+
+                if (blockStack.length > 0) {
+                    errors.push(`Missing END statements for: ${blockStack.join(', ')}`);
+                }
+
+                return { errors, warnings };
+            }
+
+            parseCode() {
+                const input = document.getElementById('codeInput').value;
+                const cleaned = this.cleanInput(input);
+                const validation = this.validateCode(cleaned);
+                
+                const messageDiv = document.getElementById('validationMessage');
+                
+                if (validation.errors.length > 0) {
+                    messageDiv.className = 'validation-message error';
+                    messageDiv.style.display = 'block';
+                    messageDiv.innerHTML = '<strong>Errors:</strong><br>' + validation.errors.join('<br>');
+                    this.parsedCode = [];
+                    this.renderParsedCode();
+                    this.updateButtons();
+                    return;
+                }
+                
+                if (validation.warnings.length > 0) {
+                    messageDiv.className = 'validation-message warning';
+                    messageDiv.style.display = 'block';
+                    messageDiv.innerHTML = '<strong>Warnings:</strong><br>' + validation.warnings.join('<br>');
+                } else {
+                    messageDiv.className = 'validation-message success';
+                    messageDiv.style.display = 'block';
+                    messageDiv.innerHTML = '<strong>✓ Code parsed successfully!</strong>';
+                }
+                
+                this.parsedCode = cleaned;
+                this.renderParsedCode();
+                this.initializeVariables();
+                this.updateButtons();
+                
+                setTimeout(() => {
+                    messageDiv.style.display = 'none';
+                }, 3000);
+            }
+
+            renderParsedCode() {
+                const pseudocodeDiv = document.getElementById('pseudocode');
+                if (this.parsedCode.length === 0) {
+                    pseudocodeDiv.innerHTML = '<div style="color: #999; font-style: italic;">No valid code to display</div>';
+                    return;
+                }
+                
+                pseudocodeDiv.innerHTML = this.parsedCode.map((line, index) => 
+                    `<div class="pseudocode-line" data-line="${index}">${line}</div>`
+                ).join('');
+            }
+
+            initializeVariables() {
+                this.variables = {};
+                this.renderVariables();
+                this.clearOutput();
+            }
+
+            renderVariables() {
+                const variablesDiv = document.getElementById('variables');
+                if (Object.keys(this.variables).length === 0) {
+                    variablesDiv.innerHTML = '<div style="color: #999; font-style: italic;">No variables defined yet</div>';
+                    return;
+                }
+                
+                variablesDiv.innerHTML = Object.entries(this.variables).map(([name, value]) => 
+                    `<div class="variable-item" data-var="${name}">
+                        <span class="variable-name">${name}:</span>
+                        <span class="variable-value">${this.formatValue(value)}</span>
+                    </div>`
+                ).join('');
+            }
+
+            formatValue(value) {
+                if (Array.isArray(value)) {
+                    return `[${value.join(', ')}]`;
+                }
+                if (typeof value === 'string') {
+                    return `"${value}"`;
+                }
+                return String(value);
+            }
+
+            updateVariable(name, value, highlight = true) {
+                this.variables[name] = value;
+                this.renderVariables();
+                if (highlight) {
+                    const varItem = document.querySelector(`[data-var="${name}"]`);
+                    if (varItem) {
+                        varItem.classList.add('updated');
+                        setTimeout(() => varItem.classList.remove('updated'), 1000);
+                    }
+                }
+            }
+
+            evaluateExpression(expr) {
+                // Simple expression evaluator
+                expr = expr.trim();
+                
+                // Handle string concatenation
+                if (expr.includes(' + ') && (expr.includes('"') || expr.includes("'"))) {
+                    return this.evaluateStringExpression(expr);
+                }
+                
+                // Handle array access like arr[0]
+                if (expr.includes('[') && expr.includes(']')) {
+                    const match = expr.match(/(\w+)\[(.+)\]/);
+                    if (match) {
+                        const arrayName = match[1];
+                        const indexExpr = match[2];
+                        const index = this.evaluateExpression(indexExpr);
+                        return this.variables[arrayName] ? this.variables[arrayName][index] : undefined;
+                    }
+                }
+                
+                // Handle simple variable references
+                if (/^\w+$/.test(expr) && this.variables.hasOwnProperty(expr)) {
+                    return this.variables[expr];
+                }
+                
+                // Handle numeric literals
+                if (/^-?\d+(\.\d+)?$/.test(expr)) {
+                    return parseFloat(expr);
+                }
+                
+                // Handle string literals
+                if ((expr.startsWith('"') && expr.endsWith('"')) || 
+                    (expr.startsWith("'") && expr.endsWith("'"))) {
+                    return expr.slice(1, -1);
+                }
+                
+                // Handle array literals
+                if (expr.startsWith('[') && expr.endsWith(']')) {
+                    const content = expr.slice(1, -1).trim();
+                    if (content === '') return [];
+                    return content.split(',').map(item => this.evaluateExpression(item.trim()));
+                }
+                
+                // Handle arithmetic expressions
+                return this.evaluateArithmetic(expr);
+            }
+
+            evaluateStringExpression(expr) {
+                const parts = expr.split(' + ');
+                let result = '';
+                for (const part of parts) {
+                    const value = this.evaluateExpression(part.trim());
+                    result += String(value);
+                }
+                return result;
+            }
+
+            evaluateArithmetic(expr) {
+                // Replace variables with their values
+                let processedExpr = expr;
+                for (const [name, value] of Object.entries(this.variables)) {
+                    if (typeof value === 'number') {
+                        processedExpr = processedExpr.replace(new RegExp(`\\b${name}\\b`, 'g'), value);
+                    }
+                }
+                
+                try {
+                    // Simple arithmetic evaluation (be careful with eval in production!)
+                    return Function(`"use strict"; return (${processedExpr})`)();
+                } catch (e) {
+                    return expr; // Return original if evaluation fails
+                }
+            }
+
+            evaluateCondition(condition) {
+                // Simple condition evaluator
+                const operators = ['>=', '<=', '>', '<', '='];
+                
+                for (const op of operators) {
+                    if (condition.includes(` ${op} `)) {
+                        const [left, right] = condition.split(` ${op} `).map(s => s.trim());
+                        const leftVal = this.evaluateExpression(left);
+                        const rightVal = this.evaluateExpression(right);
+                        
+                        switch (op) {
+                            case '>=': return leftVal >= rightVal;
+                            case '<=': return leftVal <= rightVal;
+                            case '>': return leftVal > rightVal;
+                            case '<': return leftVal < rightVal;
+                            case '=': return leftVal == rightVal;
+                        }
+                    }
+                }
+                
+                return false;
+            }
+
+            highlightLine(lineIndex) {
+                document.querySelectorAll('.pseudocode-line').forEach((line, index) => {
+                    line.classList.remove('current', 'completed', 'error');
+                    if (index < lineIndex) {
+                        line.classList.add('completed');
+                    } else if (index === lineIndex) {
+                        line.classList.add('current');
+                    }
+                });
+            }
+
+            addOutput(text) {
+                this.output.push(text);
+                document.getElementById('output').textContent = this.output.join('\n');
+            }
+
+            clearOutput() {
+                this.output = [];
+                document.getElementById('output').textContent = '';
+            }
+
+            start() {
+                if (this.parsedCode.length === 0) {
+                    alert('Please parse your code first!');
+                    return;
+                }
+                
+                this.isRunning = true;
+                this.currentStep = -1;
+                this.executionContext = { loopStacks: [], skipMode: false, skipUntil: null };
+                this.initializeVariables();
+                this.updateButtons();
+                this.nextStep();
+            }
+
+            reset() {
+                this.isRunning = false;
+                this.autoRunning = false;
+                this.currentStep = -1;
+                this.executionContext = { loopStacks: [], skipMode: false, skipUntil: null };
+                this.initializeVariables();
+                this.updateButtons();
+                document.querySelectorAll('.pseudocode-line').forEach(line => {
+                    line.classList.remove('current', 'completed', 'error');
+                });
+            }
+
+            toggleAutoRun() {
+                if (this.autoRunning) {
+                    this.autoRunning = false;
+                    this.updateButtons();
+                } else {
+                    this.autoRunning = true;
+                    this.updateButtons();
+                    this.autoExecute();
+                }
+            }
+
+            autoExecute() {
+                if (this.autoRunning && this.isRunning) {
+                    this.nextStep();
+                    if (this.isRunning) {
+                        setTimeout(() => this.autoExecute(), 1500);
+                    }
+                }
+            }
+
+            nextStep() {
+                if (!this.isRunning) return;
+
+                this.currentStep++;
+                
+                if (this.currentStep >= this.parsedCode.length) {
+                    this.isRunning = false;
+                    this.autoRunning = false;
+                    this.updateButtons();
+                    return;
+                }
+
+                this.highlightLine(this.currentStep);
+                this.executeStep(this.parsedCode[this.currentStep]);
+                this.updateButtons();
+            }
+
+            executeStep(line) {
+                try {
+                    if (line.startsWith('SET ')) {
+                        const parts = line.substring(4).split(' = ');
+                        if (parts.length === 2) {
+                            const varName = parts[0].trim();
+                            const value = this.evaluateExpression(parts[1]);
+                            this.updateVariable(varName, value);
+                        }
+                    } else if (line.startsWith('OUTPUT ')) {
+                        const expr = line.substring(7);
+                        const value = this.evaluateExpression(expr);
+                        this.addOutput(String(value));
+                    } else if (line.startsWith('PRINT ')) {
+                        const expr = line.substring(6);
+                        const value = this.evaluateExpression(expr);
+                        this.addOutput(String(value));
+                    } else if (line.startsWith('IF ')) {
+                        const condition = line.substring(3, line.indexOf(' THEN'));
+                        const result = this.evaluateCondition(condition);
+                        if (!result) {
+                            // Skip to END IF
+                            this.skipToEnd('IF');
+                        }
+                    } else if (line.startsWith('WHILE ')) {
+                        const condition = line.substring(6, line.indexOf(' DO'));
+                        const result = this.evaluateCondition(condition);
+                        if (result) {
+                            this.executionContext.loopStacks.push({
+                                type: 'WHILE',
+                                startLine: this.currentStep,
+                                condition: condition
+                            });
+                        } else {
+                            this.skipToEnd('WHILE');
+                        }
+                    } else if (line.startsWith('FOR ')) {
+                        // Simple FOR loop implementation
+                        const match = line.match(/FOR (\w+) = (.+) TO (.+) DO/);
+                        if (match) {
+                            const varName = match[1];
+                            const startVal = this.evaluateExpression(match[2]);
+                            const endVal = this.evaluateExpression(match[3]);
+                            
+                            if (!this.variables[varName] || this.variables[varName] < startVal) {
+                                this.updateVariable(varName, startVal);
+                            }
+                            
+                            if (this.variables[varName] <= endVal) {
+                                this.executionContext.loopStacks.push({
+                                    type: 'FOR',
+                                    startLine: this.currentStep,
+                                    varName: varName,
+                                    endVal: endVal
+                                });
+                            } else {
+                                this.skipToEnd('FOR');
+                            }
+                        }
+                    } else if (line === 'END WHILE') {
+                        const loop = this.executionContext.loopStacks[this.executionContext.loopStacks.length - 1];
+                        if (loop && loop.type === 'WHILE') {
+                            const result = this.evaluateCondition(loop.condition);
+                            if (result) {
+                                this.currentStep = loop.startLine; // Jump back to WHILE
+                            } else {
+                                this.executionContext.loopStacks.pop();
+                            }
+                        }
+                    } else if (line === 'END FOR') {
+                        const loop = this.executionContext.loopStacks[this.executionContext.loopStacks.length - 1];
+                        if (loop && loop.type === 'FOR') {
+                            const currentVal = this.variables[loop.varName];
+                            if (currentVal < loop.endVal) {
+                                this.updateVariable(loop.varName, currentVal + 1);
+                                this.currentStep = loop.startLine; // Jump back to FOR
+                            } else {
+                                this.executionContext.loopStacks.pop();
+                            }
+                        }
+                    }
+                } catch (error) {
+                    this.addOutput(`Error: ${error.message}`);
+                    const currentLine = document.querySelector(`[data-line="${this.currentStep}"]`);
+                    if (currentLine) {
+                        currentLine.classList.add('error');
+                    }
+                }
+            }
+
+            skipToEnd(blockType) {
+                let depth = 1;
+                while (this.currentStep + 1 < this.parsedCode.length && depth > 0) {
+                    this.currentStep++;
+                    const line = this.parsedCode[this.currentStep];
+                    
+                    if (line.startsWith(blockType + ' ') || 
+                        (blockType === 'IF' && line.startsWith('IF ')) ||
+                        (blockType === 'WHILE' && line.startsWith('WHILE ')) ||
+                        (blockType === 'FOR' && line.startsWith('FOR '))) {
+                        depth++;
+                    } else if (line === `END ${blockType}`) {
+                        depth--;
+                    }
+                }
+            }
+
+            showHelp() {
+                document.getElementById('helpModal').style.display = 'block';
+            }
+
+            updateButtons() {
+                const parseBtn = document.getElementById('parseBtn');
+                const startBtn = document.getElementById('startBtn');
+                const nextBtn = document.getElementById('nextBtn');
+                const autoBtn = document.getElementById('autoBtn');
+
+                startBtn.disabled = this.parsedCode.length === 0 || this.isRunning;
+                nextBtn.disabled = !this.isRunning || this.autoRunning;
+                autoBtn.disabled = !this.isRunning;
+                autoBtn.textContent = this.autoRunning ? 'Pause Auto' : 'Auto Run';
+            }
+        }
+
+        // Initialize the animator when the page loads
+        window.addEventListener('DOMContentLoaded', () => {
+            new CustomPseudocodeAnimator();
+        });
+    </script>
+</body>
+</html>
