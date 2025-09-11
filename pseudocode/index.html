@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Custom Pseudocode Animator</title>
+    <title>Mathematical Pseudocode Animator</title>
     <style>
         * {
             margin: 0;
@@ -39,6 +39,74 @@
             margin-bottom: 10px;
         }
 
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .speed-control {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin: 15px 0;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(52, 152, 219, 0.3);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .speed-control label {
+            color: #2c3e50;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .speed-slider {
+            width: 250px;
+            height: 8px;
+            border-radius: 4px;
+            background: linear-gradient(to right, #e74c3c, #f39c12, #2ecc71);
+            outline: none;
+            cursor: pointer;
+            appearance: none;
+        }
+
+        .speed-slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            cursor: pointer;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+            border: 3px solid white;
+        }
+
+        .speed-slider::-webkit-slider-thumb:hover {
+            background: linear-gradient(135deg, #2980b9, #3498db);
+            transform: scale(1.2);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+        }
+
+        #speedLabel {
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+            min-width: 90px;
+            text-align: center;
+            padding: 10px 18px;
+            background: linear-gradient(135deg, #74b9ff, #0984e3);
+            border-radius: 25px;
+            box-shadow: 0 3px 10px rgba(116, 185, 255, 0.3);
+        }
+
         .content {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
@@ -47,21 +115,7 @@
             min-height: 600px;
         }
 
-        .input-panel {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 20px;
-            border: 2px solid #e9ecef;
-        }
-
-        .pseudocode-panel {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 20px;
-            border: 2px solid #e9ecef;
-        }
-
-        .variables-panel {
+        .input-panel, .pseudocode-panel, .variables-panel {
             background: #f8f9fa;
             border-radius: 10px;
             padding: 20px;
@@ -123,34 +177,101 @@
             color: #856404;
         }
 
+        .pseudocode-container {
+            background: #1e1e1e;
+            border-radius: 8px;
+            padding: 0;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 2px solid #333;
+        }
+
         .pseudocode-line {
-            padding: 8px 12px;
-            margin: 2px 0;
-            border-radius: 5px;
-            border-left: 4px solid transparent;
+            display: flex;
+            align-items: center;
+            margin: 0;
             transition: all 0.3s ease;
             font-size: 14px;
             line-height: 1.4;
+            min-height: 28px;
+            border-left: 4px solid transparent;
+        }
+
+        .line-number {
+            min-width: 40px;
+            padding: 6px 8px;
+            background: #2d2d2d;
+            color: #858585;
+            text-align: right;
+            font-size: 12px;
+            border-right: 1px solid #444;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .line-number:hover {
+            background: #3d3d3d;
+            color: #fff;
+        }
+
+        .line-number.breakpoint {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .line-number.breakpoint::before {
+            content: "●";
+            margin-right: 4px;
+        }
+
+        .line-content {
+            flex: 1;
+            padding: 6px 12px;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            white-space: pre;
         }
 
         .pseudocode-line.current {
-            background: #ffeaa7;
+            background: #2d4f3e;
             border-left-color: #fdcb6e;
-            box-shadow: 0 2px 8px rgba(253, 203, 110, 0.3);
-            transform: translateX(5px);
+        }
+
+        .pseudocode-line.current .line-content {
+            background: #2d4f3e;
+        }
+
+        .pseudocode-line.current .line-number {
+            background: #fdcb6e;
+            color: #2c3e50;
+            font-weight: bold;
         }
 
         .pseudocode-line.completed {
-            background: #d1f2eb;
-            border-left-color: #00b894;
-            opacity: 0.7;
+            opacity: 0.6;
+        }
+
+        .pseudocode-line.completed .line-content {
+            background: #1a3d2e;
         }
 
         .pseudocode-line.error {
-            background: #ffebee;
-            border-left-color: #f44336;
-            color: #c62828;
+            background: #4a2c2c;
+            border-left-color: #e74c3c;
         }
+
+        .pseudocode-line.error .line-content {
+            background: #4a2c2c;
+        }
+
+        /* Syntax Highlighting */
+        .keyword { color: #569cd6; font-weight: bold; }
+        .string { color: #ce9178; }
+        .number { color: #b5cea8; }
+        .operator { color: #dcdcaa; }
+        .variable { color: #9cdcfe; }
+        .assignment { color: #d4d4d4; font-weight: bold; }
+        .comment { color: #6a9955; font-style: italic; }
 
         .variable-item {
             display: flex;
@@ -182,15 +303,134 @@
             font-size: 1.1rem;
         }
 
-        .controls {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin: 20px 0;
-            flex-wrap: wrap;
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
 
-        /* Modal Styles */
+        .btn-primary {
+            background: linear-gradient(135deg, #74b9ff, #0984e3);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(116, 185, 255, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #a29bfe, #6c5ce7);
+            color: white;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(162, 155, 254, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #00b894, #00a085);
+            color: white;
+        }
+
+        .btn-success:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 184, 148, 0.4);
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, #17a2b8, #138496);
+            color: white;
+        }
+
+        .btn-info:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(23, 162, 184, 0.4);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            color: white;
+        }
+
+        .btn-warning:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(243, 156, 18, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .output {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-family: 'Consolas', monospace;
+            min-height: 60px;
+            border: 2px solid #4a5568;
+        }
+
+        .output-title {
+            color: #81c784;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .examples {
+            margin-top: 15px;
+        }
+
+        .example-btn {
+            display: block;
+            width: 100%;
+            margin-bottom: 8px;
+            padding: 8px 12px;
+            background: #e3f2fd;
+            border: 1px solid #90caf9;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s ease;
+        }
+
+        .example-btn:hover {
+            background: #bbdefb;
+        }
+
+        .help-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 10px;
+            line-height: 1.4;
+        }
+
+        .debug-info {
+            background: #2c3e50;
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+
+        .step-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
         .modal {
             display: none;
             position: fixed;
@@ -282,108 +522,6 @@
             border: 1px solid #d4e6ea;
         }
 
-        .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #74b9ff, #0984e3);
-            color: white;
-        }
-
-        .btn-primary:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(116, 185, 255, 0.4);
-        }
-
-        .btn-secondary {
-            background: linear-gradient(135deg, #a29bfe, #6c5ce7);
-            color: white;
-        }
-
-        .btn-secondary:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(162, 155, 254, 0.4);
-        }
-
-        .btn-success {
-            background: linear-gradient(135deg, #00b894, #00a085);
-            color: white;
-        }
-
-        .btn-success:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 184, 148, 0.4);
-        }
-
-        .btn-info {
-            background: linear-gradient(135deg, #17a2b8, #138496);
-            color: white;
-        }
-
-        .btn-info:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(23, 162, 184, 0.4);
-        }
-
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none !important;
-        }
-
-        .output {
-            background: #2d3748;
-            color: #e2e8f0;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 15px;
-            font-family: 'Consolas', monospace;
-            min-height: 60px;
-            border: 2px solid #4a5568;
-        }
-
-        .output-title {
-            color: #81c784;
-            font-weight: bold;
-            margin-bottom: 8px;
-        }
-
-        .examples {
-            margin-top: 15px;
-        }
-
-        .example-btn {
-            display: block;
-            width: 100%;
-            margin-bottom: 8px;
-            padding: 8px 12px;
-            background: #e3f2fd;
-            border: 1px solid #90caf9;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 13px;
-            transition: all 0.2s ease;
-        }
-
-        .example-btn:hover {
-            background: #bbdefb;
-        }
-
-        .help-text {
-            font-size: 12px;
-            color: #666;
-            margin-top: 10px;
-            line-height: 1.4;
-        }
-
         @media (max-width: 1024px) {
             .content {
                 grid-template-columns: 1fr;
@@ -399,23 +537,39 @@
             .btn {
                 width: 200px;
             }
+
+            .speed-control {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .speed-slider {
+                width: 200px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>Custom Pseudocode Animator</h1>
-            <p>Write your own pseudocode and watch it execute step by step</p>
+            <h1>Mathematical Pseudocode Animator</h1>
+            <p>Write mathematically correct pseudocode and watch it execute step by step</p>
         </div>
 
         <div class="controls">
             <button class="btn btn-success" id="parseBtn">Parse Code</button>
             <button class="btn btn-primary" id="startBtn" disabled>Start</button>
             <button class="btn btn-primary" id="nextBtn" disabled>Next Step</button>
-            <button class="btn btn-secondary" id="resetBtn">Reset</button>
+            <button class="btn btn-warning" id="prevBtn" disabled>Step Back</button>
             <button class="btn btn-primary" id="autoBtn" disabled>Auto Run</button>
+            <button class="btn btn-secondary" id="resetBtn">Reset</button>
             <button class="btn btn-info" id="helpBtn">📖 Help & Keywords</button>
+        </div>
+
+        <div class="speed-control">
+            <label for="speedSlider">Auto Run Speed:</label>
+            <input type="range" id="speedSlider" min="1" max="10" value="5" class="speed-slider">
+            <span id="speedLabel">Normal</span>
         </div>
 
         <div class="content">
@@ -424,37 +578,52 @@
                 <textarea id="codeInput" class="code-input" placeholder="Enter your pseudocode here...
 
 Example:
-SET x = 5
-SET y = 10
-SET sum = x + y
+x ← 5
+y ← 10
+sum ← x + y
+square ← x ^ 2
 OUTPUT sum
+OUTPUT square
 
 Supported commands:
-• SET variable = value
-• PRINT variable/value
+• variable ← value
+• PRINT variable/value  
 • OUTPUT variable/value
 • IF condition THEN ... END IF
 • WHILE condition DO ... END WHILE
-• FOR variable = start TO end DO ... END FOR"></textarea>
+• FOR variable ← start TO end DO ... END FOR
+
+Use ← for assignment, = for equality, ^ for powers
+Click line numbers to set breakpoints!"></textarea>
                 <div id="validationMessage" class="validation-message"></div>
                 
                 <div class="examples">
                     <div style="font-weight: bold; margin-bottom: 8px; color: #2c3e50;">Quick Examples:</div>
                     <button class="example-btn" data-example="simple">Simple Calculation</button>
+                    <button class="example-btn" data-example="power">Powers & Exponents</button>
                     <button class="example-btn" data-example="loop">While Loop</button>
                     <button class="example-btn" data-example="factorial">Factorial</button>
-                    <button class="example-btn" data-example="array">Array Processing</button>
+                    <button class="example-btn" data-example="squares">Square Numbers</button>
                 </div>
                 
                 <div class="help-text">
-                    <strong>Tip:</strong> Use simple variable names and standard operators (+, -, *, /, >, <, =, >=, <=). 
-                    Arrays use [brackets] and indexing like arr[0].
+                    <strong>Instructions:</strong> Click line numbers to set breakpoints. Use Step Back to undo steps. 
+                    Syntax highlighting shows different code elements in color.
                 </div>
             </div>
 
             <div class="pseudocode-panel">
                 <div class="panel-title">Processed Code</div>
-                <div id="pseudocode"></div>
+                <div class="pseudocode-container" id="pseudocode"></div>
+                
+                <div class="debug-info">
+                    <div class="step-info">
+                        <span>Step: <span id="stepCounter">0</span></span>
+                        <span>Breakpoints: <span id="breakpointCount">0</span></span>
+                    </div>
+                    <div>Status: <span id="executionStatus">Ready</span></div>
+                </div>
+                
                 <div class="output">
                     <div class="output-title">Output:</div>
                     <div id="output"></div>
@@ -472,100 +641,54 @@ Supported commands:
             <div class="modal-content">
                 <div class="modal-header">
                     <span class="close">&times;</span>
-                    <h2>Pseudocode Keywords & Syntax Guide</h2>
+                    <h2>Mathematical Pseudocode Syntax Guide</h2>
                 </div>
 
                 <div class="keyword-section">
-                    <h3>Variable Operations</h3>
+                    <h3>New Features</h3>
                     
                     <div class="keyword-item">
-                        <div class="keyword-syntax">SET variable = value</div>
-                        <div class="keyword-description">Assigns a value to a variable. The value can be a number, string, or expression.</div>
-                        <div class="keyword-example">SET x = 5<br>SET name = "Alice"<br>SET sum = x + y</div>
-                    </div>
-                </div>
-
-                <div class="keyword-section">
-                    <h3>Output Commands</h3>
-                    
-                    <div class="keyword-item">
-                        <div class="keyword-syntax">OUTPUT expression</div>
-                        <div class="keyword-description">Displays the value of an expression or variable.</div>
-                        <div class="keyword-example">OUTPUT x<br>OUTPUT "Hello World"<br>OUTPUT "Result: " + sum</div>
+                        <div class="keyword-syntax">Breakpoints</div>
+                        <div class="keyword-description">Click on line numbers to set/remove breakpoints. Execution will pause at breakpoints.</div>
+                        <div class="keyword-example">Click the gray line number → Red dot appears → Execution pauses there</div>
                     </div>
 
                     <div class="keyword-item">
-                        <div class="keyword-syntax">PRINT expression</div>
-                        <div class="keyword-description">Same as OUTPUT - displays the value of an expression or variable.</div>
-                        <div class="keyword-example">PRINT x<br>PRINT "Hello World"<br>PRINT "Result: " + sum</div>
+                        <div class="keyword-syntax">Step Back</div>
+                        <div class="keyword-description">Undo the last execution step to review what happened.</div>
+                        <div class="keyword-example">Use "Step Back" button to reverse the last operation</div>
+                    </div>
+
+                    <div class="keyword-item">
+                        <div class="keyword-syntax">Syntax Highlighting</div>
+                        <div class="keyword-description">Different parts of code are colored: keywords (blue), strings (orange), numbers (green), operators (yellow).</div>
+                        <div class="keyword-example">IF (blue) x (cyan) ← (white) 5 (green) THEN (blue)</div>
                     </div>
                 </div>
 
                 <div class="keyword-section">
-                    <h3>Conditional Statements</h3>
+                    <h3>Mathematical Operators</h3>
                     
                     <div class="keyword-item">
-                        <div class="keyword-syntax">IF condition THEN<br>&nbsp;&nbsp;&nbsp;&nbsp;statements<br>END IF</div>
-                        <div class="keyword-description">Executes statements only if the condition is true.</div>
-                        <div class="keyword-example">IF x > 5 THEN<br>&nbsp;&nbsp;&nbsp;&nbsp;PRINT "x is greater than 5"<br>END IF</div>
+                        <div class="keyword-syntax">Assignment vs Equality vs Power</div>
+                        <div class="keyword-description">← for assignment, = for equality testing, ^ for exponentiation</div>
+                        <div class="keyword-example">x ← 5 (assignment)<br>IF x = 5 THEN (equality)<br>area ← x ^ 2 (power)</div>
+                    </div>
+
+                    <div class="keyword-item">
+                        <div class="keyword-syntax">Arithmetic Operators</div>
+                        <div class="keyword-description">+ (add), - (subtract), * (multiply), / (divide), ^ (power)</div>
+                        <div class="keyword-example">result ← 2 + 3 * 4<br>area ← pi * radius ^ 2<br>compound ← principal * (1 + rate) ^ years</div>
                     </div>
                 </div>
 
                 <div class="keyword-section">
-                    <h3>Loop Statements</h3>
+                    <h3>Control Structures</h3>
                     
                     <div class="keyword-item">
-                        <div class="keyword-syntax">WHILE condition DO<br>&nbsp;&nbsp;&nbsp;&nbsp;statements<br>END WHILE</div>
-                        <div class="keyword-description">Repeats statements while the condition remains true.</div>
-                        <div class="keyword-example">WHILE count < 10 DO<br>&nbsp;&nbsp;&nbsp;&nbsp;PRINT count<br>&nbsp;&nbsp;&nbsp;&nbsp;SET count = count + 1<br>END WHILE</div>
-                    </div>
-
-                    <div class="keyword-item">
-                        <div class="keyword-syntax">FOR variable = start TO end DO<br>&nbsp;&nbsp;&nbsp;&nbsp;statements<br>END FOR</div>
-                        <div class="keyword-description">Repeats statements with a counter variable from start to end.</div>
-                        <div class="keyword-example">FOR i = 1 TO 5 DO<br>&nbsp;&nbsp;&nbsp;&nbsp;PRINT i<br>END FOR</div>
-                    </div>
-                </div>
-
-                <div class="keyword-section">
-                    <h3>Data Types & Operations</h3>
-                    
-                    <div class="keyword-item">
-                        <div class="keyword-syntax">Numbers</div>
-                        <div class="keyword-description">Whole numbers (5, -3) or decimals (3.14, -2.5)</div>
-                        <div class="keyword-example">SET age = 16<br>SET pi = 3.14159</div>
-                    </div>
-
-                    <div class="keyword-item">
-                        <div class="keyword-syntax">Strings</div>
-                        <div class="keyword-description">Text enclosed in double quotes. Use + for concatenation.</div>
-                        <div class="keyword-example">SET message = "Hello"<br>SET greeting = "Hi " + name</div>
-                    </div>
-
-                    <div class="keyword-item">
-                        <div class="keyword-syntax">Arrays</div>
-                        <div class="keyword-description">Lists of values in square brackets. Access elements with [index].</div>
-                        <div class="keyword-example">SET numbers = [1, 2, 3, 4, 5]<br>SET first = numbers[0]</div>
-                    </div>
-                </div>
-
-                <div class="keyword-section">
-                    <h3>Comparison Operators</h3>
-                    
-                    <div class="keyword-item">
-                        <div class="keyword-syntax">= &nbsp;&nbsp; > &nbsp;&nbsp; < &nbsp;&nbsp; >= &nbsp;&nbsp; <=</div>
-                        <div class="keyword-description">Equal to, greater than, less than, greater than or equal, less than or equal</div>
-                        <div class="keyword-example">IF age >= 18 THEN<br>IF score = 100 THEN<br>IF temperature < 0 THEN</div>
-                    </div>
-                </div>
-
-                <div class="keyword-section">
-                    <h3>Arithmetic Operators</h3>
-                    
-                    <div class="keyword-item">
-                        <div class="keyword-syntax">+ &nbsp;&nbsp; - &nbsp;&nbsp; * &nbsp;&nbsp; /</div>
-                        <div class="keyword-description">Addition, subtraction, multiplication, division</div>
-                        <div class="keyword-example">SET result = x + y * 2<br>SET average = total / count</div>
+                        <div class="keyword-syntax">FOR variable ← start TO end DO<br>&nbsp;&nbsp;&nbsp;&nbsp;statements<br>END FOR</div>
+                        <div class="keyword-description">Repeats statements with counter from start to end.</div>
+                        <div class="keyword-example">FOR i ← 1 TO 5 DO<br>&nbsp;&nbsp;&nbsp;&nbsp;square ← i ^ 2<br>&nbsp;&nbsp;&nbsp;&nbsp;PRINT square<br>END FOR</div>
                     </div>
                 </div>
             </div>
@@ -573,7 +696,7 @@ Supported commands:
     </div>
 
     <script>
-        class CustomPseudocodeAnimator {
+        class MathematicalPseudocodeAnimator {
             constructor() {
                 this.currentStep = -1;
                 this.isRunning = false;
@@ -581,45 +704,44 @@ Supported commands:
                 this.variables = {};
                 this.output = [];
                 this.parsedCode = [];
-                this.executionContext = {
-                    loopStacks: [],
-                    skipMode: false,
-                    skipUntil: null
-                };
+                this.executionContext = { loopStacks: [], ifStack: [] };
+                this.autoRunSpeed = 5;
+                this.breakpoints = new Set();
+                this.executionHistory = [];
+                this.stepCounter = 0;
                 
                 this.examples = {
-                    simple: `SET x = 5
-SET y = 10
-SET sum = x + y
-PRINT "The sum is: " + sum`,
+                    simple: `x ← 5
+y ← 10
+sum ← x + y
+PRINT "Sum: " + sum`,
+
+                    power: `base ← 3
+exponent ← 4
+result ← base ^ exponent
+PRINT base + " to the power of " + exponent + " = " + result`,
+
+                    squares: `FOR i ← 1 TO 5 DO
+    square ← i ^ 2
+    PRINT "Square of " + i + " is " + square
+END FOR`,
                     
-                    loop: `SET count = 0
-SET total = 0
+                    loop: `count ← 0
+total ← 0
 WHILE count < 5 DO
-    SET total = total + count
-    SET count = count + 1
+    total ← total + count
+    count ← count + 1
 END WHILE
 PRINT "Total: " + total`,
 
-                    factorial: `SET n = 5
-SET factorial = 1
-SET i = 1
+                    factorial: `n ← 5
+factorial ← 1
+i ← 1
 WHILE i <= n DO
-    SET factorial = factorial * i
-    SET i = i + 1
+    factorial ← factorial * i
+    i ← i + 1
 END WHILE
-PRINT "Factorial of " + n + " is " + factorial`,
-
-                    array: `SET numbers = [3, 7, 2, 9, 1]
-SET max = numbers[0]
-SET i = 1
-WHILE i < 5 DO
-    IF numbers[i] > max THEN
-        SET max = numbers[i]
-    END IF
-    SET i = i + 1
-END WHILE
-PRINT "Maximum: " + max`
+PRINT "Factorial of " + n + " is " + factorial`
                 };
                 
                 this.initializeEventListeners();
@@ -629,24 +751,35 @@ PRINT "Maximum: " + max`
                 document.getElementById('parseBtn').addEventListener('click', () => this.parseCode());
                 document.getElementById('startBtn').addEventListener('click', () => this.start());
                 document.getElementById('nextBtn').addEventListener('click', () => this.nextStep());
+                document.getElementById('prevBtn').addEventListener('click', () => this.stepBack());
                 document.getElementById('resetBtn').addEventListener('click', () => this.reset());
                 document.getElementById('autoBtn').addEventListener('click', () => this.toggleAutoRun());
                 document.getElementById('helpBtn').addEventListener('click', () => this.showHelp());
                 
-                // Modal event listeners
-                const modal = document.getElementById('helpModal');
-                const closeBtn = document.querySelector('.close');
-                
-                closeBtn.addEventListener('click', () => {
-                    modal.style.display = 'none';
-                });
-                
-                window.addEventListener('click', (e) => {
-                    if (e.target === modal) {
-                        modal.style.display = 'none';
+                // Tab key support
+                const codeInput = document.getElementById('codeInput');
+                codeInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Tab') {
+                        e.preventDefault();
+                        const start = codeInput.selectionStart;
+                        const end = codeInput.selectionEnd;
+                        const value = codeInput.value;
+                        const newValue = value.substring(0, start) + '    ' + value.substring(end);
+                        codeInput.value = newValue;
+                        codeInput.selectionStart = codeInput.selectionEnd = start + 4;
                     }
                 });
                 
+                // Modal listeners
+                const modal = document.getElementById('helpModal');
+                document.querySelector('.close').addEventListener('click', () => {
+                    modal.style.display = 'none';
+                });
+                window.addEventListener('click', (e) => {
+                    if (e.target === modal) modal.style.display = 'none';
+                });
+                
+                // Example buttons
                 document.querySelectorAll('.example-btn').forEach(btn => {
                     btn.addEventListener('click', (e) => {
                         const example = e.target.dataset.example;
@@ -654,99 +787,37 @@ PRINT "Maximum: " + max`
                         this.parseCode();
                     });
                 });
-            }
 
-            cleanInput(input) {
-                // Remove extra whitespace and normalize line endings
-                let cleaned = input.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-                
-                // Split into lines and clean each line
-                let lines = cleaned.split('\n').map(line => {
-                    // Remove leading/trailing whitespace
-                    line = line.trim();
-                    
-                    // Normalize keywords to uppercase
-                    line = line.replace(/\b(set|if|then|else|end|while|do|for|to|output|print|input)\b/gi, 
-                        match => match.toUpperCase());
-                    
-                    // Fix common spacing issues
-                    line = line.replace(/\s*=\s*/g, ' = ');
-                    line = line.replace(/\s*\+\s*/g, ' + ');
-                    line = line.replace(/\s*-\s*/g, ' - ');
-                    line = line.replace(/\s*\*\s*/g, ' * ');
-                    line = line.replace(/\s*\/\s*/g, ' / ');
-                    line = line.replace(/\s*>\s*/g, ' > ');
-                    line = line.replace(/\s*<\s*/g, ' < ');
-                    line = line.replace(/\s*>=\s*/g, ' >= ');
-                    line = line.replace(/\s*<=\s*/g, ' <= ');
-                    
-                    return line;
-                }).filter(line => line.length > 0); // Remove empty lines
-                
-                return lines;
-            }
-
-            validateCode(lines) {
-                const errors = [];
-                const warnings = [];
-                let indentLevel = 0;
-                const blockStack = [];
-
-                for (let i = 0; i < lines.length; i++) {
-                    const line = lines[i];
-                    const lineNum = i + 1;
-
-                    // Check for basic syntax
-                    if (line.startsWith('SET ')) {
-                        if (!line.includes(' = ')) {
-                            errors.push(`Line ${lineNum}: SET statements must use '=' assignment`);
-                        }
-                    } else if (line.startsWith('IF ')) {
-                        if (!line.includes(' THEN')) {
-                            errors.push(`Line ${lineNum}: IF statements must end with THEN`);
-                        }
-                        blockStack.push('IF');
-                    } else if (line.startsWith('WHILE ')) {
-                        if (!line.includes(' DO')) {
-                            errors.push(`Line ${lineNum}: WHILE statements must end with DO`);
-                        }
-                        blockStack.push('WHILE');
-                    } else if (line.startsWith('FOR ')) {
-                        if (!line.includes(' TO ') || !line.includes(' DO')) {
-                            errors.push(`Line ${lineNum}: FOR statements must have format 'FOR var = start TO end DO'`);
-                        }
-                        blockStack.push('FOR');
-                    } else if (line === 'END IF' || line === 'END WHILE' || line === 'END FOR') {
-                        if (blockStack.length === 0) {
-                            errors.push(`Line ${lineNum}: Unexpected END statement`);
-                        } else {
-                            const expectedEnd = blockStack.pop();
-                            const actualEnd = line.split(' ')[1];
-                            if (expectedEnd !== actualEnd) {
-                                warnings.push(`Line ${lineNum}: Expected 'END ${expectedEnd}' but found '${line}'`);
-                            }
-                        }
-                    } else if (line.startsWith('OUTPUT ')) {
-                        // Valid output statement
-                    } else if (line.startsWith('PRINT ')) {
-                        // Valid print statement
-                    } else {
-                        warnings.push(`Line ${lineNum}: Unknown command format: ${line}`);
-                    }
-                }
-
-                if (blockStack.length > 0) {
-                    errors.push(`Missing END statements for: ${blockStack.join(', ')}`);
-                }
-
-                return { errors, warnings };
+                // Speed slider
+                const speedSlider = document.getElementById('speedSlider');
+                speedSlider.addEventListener('input', (e) => {
+                    this.autoRunSpeed = parseInt(e.target.value);
+                    this.updateSpeedLabel();
+                });
+                this.updateSpeedLabel();
             }
 
             parseCode() {
-                const input = document.getElementById('codeInput').value;
-                const cleaned = this.cleanInput(input);
-                const validation = this.validateCode(cleaned);
+                let rawInput = document.getElementById('codeInput').value;
                 
+                // STEP 1: Replace ^ with ** immediately
+                rawInput = rawInput.replace(/\^/g, '**');
+                
+                // STEP 2: Clean and process the input
+                const lines = rawInput.split('\n')
+                    .map(line => line.trim())
+                    .filter(line => line.length > 0)
+                    .map(line => {
+                        // Convert <- to ←
+                        line = line.replace(/<-/g, '←');
+                        // Normalize keywords
+                        line = line.replace(/\b(if|then|else|elseif|end|while|do|for|to|output|print|input)\b/gi, 
+                            match => match.toUpperCase());
+                        return line;
+                    });
+
+                // STEP 3: Validate
+                const validation = this.validateCode(lines);
                 const messageDiv = document.getElementById('validationMessage');
                 
                 if (validation.errors.length > 0) {
@@ -759,36 +830,265 @@ PRINT "Maximum: " + max`
                     return;
                 }
                 
-                if (validation.warnings.length > 0) {
-                    messageDiv.className = 'validation-message warning';
-                    messageDiv.style.display = 'block';
-                    messageDiv.innerHTML = '<strong>Warnings:</strong><br>' + validation.warnings.join('<br>');
-                } else {
-                    messageDiv.className = 'validation-message success';
-                    messageDiv.style.display = 'block';
-                    messageDiv.innerHTML = '<strong>✓ Code parsed successfully!</strong>';
-                }
+                messageDiv.className = 'validation-message success';
+                messageDiv.style.display = 'block';
+                messageDiv.innerHTML = '<strong>✓ Code parsed successfully!</strong>';
                 
-                this.parsedCode = cleaned;
+                // STEP 4: Store processed code and reset execution state
+                this.parsedCode = lines;
+                this.breakpoints.clear();
+                this.executionHistory = [];
+                this.stepCounter = 0;
                 this.renderParsedCode();
                 this.initializeVariables();
                 this.updateButtons();
+                this.updateDebugInfo();
                 
-                setTimeout(() => {
-                    messageDiv.style.display = 'none';
-                }, 3000);
+                setTimeout(() => messageDiv.style.display = 'none', 3000);
+            }
+
+            validateCode(lines) {
+                const errors = [];
+                const warnings = [];
+                const blockStack = [];
+
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i];
+                    const lineNum = i + 1;
+
+                    if (line.includes('←') && !line.startsWith('IF ') && !line.startsWith('ELSE IF ') && 
+                        !line.startsWith('WHILE ') && !line.startsWith('FOR ') && 
+                        !line.startsWith('OUTPUT ') && !line.startsWith('PRINT ')) {
+                        const parts = line.split('←');
+                        if (parts.length !== 2 || parts[0].trim() === '' || parts[1].trim() === '') {
+                            errors.push(`Line ${lineNum}: Invalid assignment format`);
+                        }
+                    } else if (line.startsWith('IF ')) {
+                        if (!line.includes('THEN')) errors.push(`Line ${lineNum}: IF must end with THEN`);
+                        blockStack.push('IF');
+                    } else if (line.startsWith('WHILE ')) {
+                        if (!line.includes('DO')) errors.push(`Line ${lineNum}: WHILE must end with DO`);
+                        blockStack.push('WHILE');
+                    } else if (line.startsWith('FOR ')) {
+                        if (!line.includes('←') || !line.includes('TO') || !line.includes('DO')) {
+                            errors.push(`Line ${lineNum}: FOR must be 'FOR var ← start TO end DO'`);
+                        }
+                        blockStack.push('FOR');
+                    } else if (line.match(/^END (IF|WHILE|FOR)$/)) {
+                        if (blockStack.length === 0) {
+                            errors.push(`Line ${lineNum}: Unexpected END statement`);
+                        } else {
+                            blockStack.pop();
+                        }
+                    }
+                }
+
+                if (blockStack.length > 0) {
+                    errors.push(`Missing END statements for: ${blockStack.join(', ')}`);
+                }
+
+                return { errors, warnings };
+            }
+
+            applySyntaxHighlighting(line, lineElement) {
+                // Clear existing content
+                lineElement.innerHTML = '';
+                
+                // Split line into tokens for highlighting
+                const tokens = this.tokenizeLine(line);
+                
+                tokens.forEach(token => {
+                    const span = document.createElement('span');
+                    span.textContent = token.text;
+                    span.className = token.type;
+                    lineElement.appendChild(span);
+                });
+            }
+
+            tokenizeLine(line) {
+                const tokens = [];
+                let i = 0;
+                
+                while (i < line.length) {
+                    // Skip whitespace but preserve it
+                    if (line[i] === ' ') {
+                        let spaces = '';
+                        while (i < line.length && line[i] === ' ') {
+                            spaces += line[i];
+                            i++;
+                        }
+                        tokens.push({ text: spaces, type: '' });
+                        continue;
+                    }
+                    
+                    // Check for strings
+                    if (line[i] === '"') {
+                        let str = '"';
+                        i++;
+                        while (i < line.length && line[i] !== '"') {
+                            str += line[i];
+                            i++;
+                        }
+                        if (i < line.length) str += line[i++]; // closing quote
+                        tokens.push({ text: str, type: 'string' });
+                        continue;
+                    }
+                    
+                    // Check for numbers
+                    if (/\d/.test(line[i])) {
+                        let num = '';
+                        while (i < line.length && /[\d.]/.test(line[i])) {
+                            num += line[i];
+                            i++;
+                        }
+                        tokens.push({ text: num, type: 'number' });
+                        continue;
+                    }
+                    
+                    // Check for assignment arrow
+                    if (line[i] === '←') {
+                        tokens.push({ text: '←', type: 'assignment' });
+                        i++;
+                        continue;
+                    }
+                    
+                    // Check for operators
+                    if (line.substr(i, 2) === '**') {
+                        tokens.push({ text: '**', type: 'operator' });
+                        i += 2;
+                        continue;
+                    }
+                    
+                    if (/[+\-*/><=]/.test(line[i])) {
+                        // Check for compound operators
+                        if (i + 1 < line.length && line.substr(i, 2).match(/>=|<=/)) {
+                            tokens.push({ text: line.substr(i, 2), type: 'operator' });
+                            i += 2;
+                        } else {
+                            tokens.push({ text: line[i], type: 'operator' });
+                            i++;
+                        }
+                        continue;
+                    }
+                    
+                    // Check for words (keywords or variables)
+                    if (/[a-zA-Z_]/.test(line[i])) {
+                        let word = '';
+                        while (i < line.length && /[a-zA-Z0-9_]/.test(line[i])) {
+                            word += line[i];
+                            i++;
+                        }
+                        
+                        const keywords = ['IF', 'THEN', 'ELSE', 'ELSEIF', 'END', 'WHILE', 'DO', 'FOR', 'TO', 'OUTPUT', 'PRINT', 'INPUT'];
+                        const type = keywords.includes(word) ? 'keyword' : 'variable';
+                        tokens.push({ text: word, type });
+                        continue;
+                    }
+                    
+                    // Everything else (punctuation, etc.)
+                    tokens.push({ text: line[i], type: '' });
+                    i++;
+                }
+                
+                return tokens;
             }
 
             renderParsedCode() {
                 const pseudocodeDiv = document.getElementById('pseudocode');
                 if (this.parsedCode.length === 0) {
-                    pseudocodeDiv.innerHTML = '<div style="color: #999; font-style: italic;">No valid code to display</div>';
+                    pseudocodeDiv.innerHTML = '<div style="color: #999; font-style: italic; padding: 20px;">No valid code to display</div>';
                     return;
                 }
                 
-                pseudocodeDiv.innerHTML = this.parsedCode.map((line, index) => 
-                    `<div class="pseudocode-line" data-line="${index}">${line}</div>`
-                ).join('');
+                let indentLevel = 0;
+                pseudocodeDiv.innerHTML = '';
+                
+                this.parsedCode.forEach((line, index) => {
+                    const trimmedLine = line.trim();
+                    
+                    if (trimmedLine.startsWith('END ') || 
+                        trimmedLine === 'ELSE' || 
+                        trimmedLine.startsWith('ELSE IF ')) {
+                        indentLevel = Math.max(0, indentLevel - 1);
+                    }
+                    
+                    const indent = '    '.repeat(indentLevel);
+                    const indentedLine = indent + trimmedLine;
+                    
+                    if (trimmedLine.startsWith('IF ') || 
+                        trimmedLine.startsWith('ELSE IF ') ||
+                        trimmedLine === 'ELSE' ||
+                        trimmedLine.startsWith('WHILE ') || 
+                        trimmedLine.startsWith('FOR ')) {
+                        indentLevel++;
+                    }
+                    
+                    const isBreakpoint = this.breakpoints.has(index);
+                    
+                    // Create line container
+                    const lineDiv = document.createElement('div');
+                    lineDiv.className = 'pseudocode-line';
+                    lineDiv.dataset.line = index;
+                    
+                    // Create line number
+                    const lineNumDiv = document.createElement('div');
+                    lineNumDiv.className = `line-number ${isBreakpoint ? 'breakpoint' : ''}`;
+                    lineNumDiv.dataset.line = index;
+                    lineNumDiv.textContent = index + 1;
+                    lineNumDiv.addEventListener('click', (e) => {
+                        const lineIndex = parseInt(e.target.dataset.line);
+                        this.toggleBreakpoint(lineIndex);
+                    });
+                    
+                    // Create line content
+                    const lineContentDiv = document.createElement('div');
+                    lineContentDiv.className = 'line-content';
+                    
+                    // Apply syntax highlighting
+                    this.applySyntaxHighlighting(indentedLine, lineContentDiv);
+                    
+                    // Assemble the line
+                    lineDiv.appendChild(lineNumDiv);
+                    lineDiv.appendChild(lineContentDiv);
+                    pseudocodeDiv.appendChild(lineDiv);
+                });
+            }
+
+            toggleBreakpoint(lineIndex) {
+                if (this.breakpoints.has(lineIndex)) {
+                    this.breakpoints.delete(lineIndex);
+                } else {
+                    this.breakpoints.add(lineIndex);
+                }
+                this.renderParsedCode();
+                this.updateDebugInfo();
+            }
+
+            saveExecutionState() {
+                this.executionHistory.push({
+                    step: this.currentStep,
+                    variables: JSON.parse(JSON.stringify(this.variables)),
+                    output: [...this.output],
+                    executionContext: JSON.parse(JSON.stringify(this.executionContext)),
+                    stepCounter: this.stepCounter
+                });
+            }
+
+            stepBack() {
+                if (this.executionHistory.length === 0) return;
+                
+                const previousState = this.executionHistory.pop();
+                this.currentStep = previousState.step;
+                this.variables = previousState.variables;
+                this.output = previousState.output;
+                this.executionContext = previousState.executionContext;
+                this.stepCounter = previousState.stepCounter;
+                
+                this.renderVariables();
+                this.renderOutput();
+                this.highlightLine(this.currentStep);
+                this.updateButtons();
+                this.updateDebugInfo();
             }
 
             initializeVariables() {
@@ -813,12 +1113,8 @@ PRINT "Maximum: " + max`
             }
 
             formatValue(value) {
-                if (Array.isArray(value)) {
-                    return `[${value.join(', ')}]`;
-                }
-                if (typeof value === 'string') {
-                    return `"${value}"`;
-                }
+                if (Array.isArray(value)) return `[${value.join(', ')}]`;
+                if (typeof value === 'string') return `"${value}"`;
                 return String(value);
             }
 
@@ -835,15 +1131,14 @@ PRINT "Maximum: " + max`
             }
 
             evaluateExpression(expr) {
-                // Simple expression evaluator
                 expr = expr.trim();
                 
                 // Handle string concatenation
-                if (expr.includes(' + ') && (expr.includes('"') || expr.includes("'"))) {
+                if (expr.includes('+') && (expr.includes('"') || expr.includes("'"))) {
                     return this.evaluateStringExpression(expr);
                 }
                 
-                // Handle array access like arr[0]
+                // Handle array access
                 if (expr.includes('[') && expr.includes(']')) {
                     const match = expr.match(/(\w+)\[(.+)\]/);
                     if (match) {
@@ -882,7 +1177,7 @@ PRINT "Maximum: " + max`
             }
 
             evaluateStringExpression(expr) {
-                const parts = expr.split(' + ');
+                const parts = expr.split('+');
                 let result = '';
                 for (const part of parts) {
                     const value = this.evaluateExpression(part.trim());
@@ -892,42 +1187,47 @@ PRINT "Maximum: " + max`
             }
 
             evaluateArithmetic(expr) {
-                // Replace variables with their values
                 let processedExpr = expr;
-                for (const [name, value] of Object.entries(this.variables)) {
+                
+                // Replace variables with their values in parentheses
+                const sortedVars = Object.keys(this.variables).sort((a, b) => b.length - a.length);
+                for (const name of sortedVars) {
+                    const value = this.variables[name];
                     if (typeof value === 'number') {
-                        processedExpr = processedExpr.replace(new RegExp(`\\b${name}\\b`, 'g'), value);
+                        processedExpr = processedExpr.replace(new RegExp(`\\b${name}\\b`, 'g'), `(${value})`);
                     }
                 }
                 
                 try {
-                    // Simple arithmetic evaluation (be careful with eval in production!)
                     return Function(`"use strict"; return (${processedExpr})`)();
                 } catch (e) {
-                    return expr; // Return original if evaluation fails
+                    console.log('Arithmetic error:', e, 'Expression:', processedExpr);
+                    return 0;
                 }
             }
 
             evaluateCondition(condition) {
-                // Simple condition evaluator
-                const operators = ['>=', '<=', '>', '<', '='];
+                condition = condition.trim();
+                condition = condition.replace(/≥/g, '>=').replace(/≤/g, '<=');
                 
+                const operators = ['>=', '<=', '>', '<', '='];
                 for (const op of operators) {
-                    if (condition.includes(` ${op} `)) {
-                        const [left, right] = condition.split(` ${op} `).map(s => s.trim());
-                        const leftVal = this.evaluateExpression(left);
-                        const rightVal = this.evaluateExpression(right);
-                        
-                        switch (op) {
-                            case '>=': return leftVal >= rightVal;
-                            case '<=': return leftVal <= rightVal;
-                            case '>': return leftVal > rightVal;
-                            case '<': return leftVal < rightVal;
-                            case '=': return leftVal == rightVal;
+                    if (condition.includes(op)) {
+                        const parts = condition.split(op);
+                        if (parts.length === 2) {
+                            const leftVal = this.evaluateExpression(parts[0].trim());
+                            const rightVal = this.evaluateExpression(parts[1].trim());
+                            
+                            switch (op) {
+                                case '>=': return leftVal >= rightVal;
+                                case '<=': return leftVal <= rightVal;
+                                case '>': return leftVal > rightVal;
+                                case '<': return leftVal < rightVal;
+                                case '=': return leftVal == rightVal;
+                            }
                         }
                     }
                 }
-                
                 return false;
             }
 
@@ -944,12 +1244,16 @@ PRINT "Maximum: " + max`
 
             addOutput(text) {
                 this.output.push(text);
-                document.getElementById('output').textContent = this.output.join('\n');
+                this.renderOutput();
+            }
+
+            renderOutput() {
+                document.getElementById('output').innerHTML = this.output.join('<br>');
             }
 
             clearOutput() {
                 this.output = [];
-                document.getElementById('output').textContent = '';
+                this.renderOutput();
             }
 
             start() {
@@ -960,9 +1264,12 @@ PRINT "Maximum: " + max`
                 
                 this.isRunning = true;
                 this.currentStep = -1;
-                this.executionContext = { loopStacks: [], skipMode: false, skipUntil: null };
+                this.stepCounter = 0;
+                this.executionContext = { loopStacks: [], ifStack: [] };
+                this.executionHistory = [];
                 this.initializeVariables();
                 this.updateButtons();
+                this.updateDebugInfo();
                 this.nextStep();
             }
 
@@ -970,9 +1277,12 @@ PRINT "Maximum: " + max`
                 this.isRunning = false;
                 this.autoRunning = false;
                 this.currentStep = -1;
-                this.executionContext = { loopStacks: [], skipMode: false, skipUntil: null };
+                this.stepCounter = 0;
+                this.executionContext = { loopStacks: [], ifStack: [] };
+                this.executionHistory = [];
                 this.initializeVariables();
                 this.updateButtons();
+                this.updateDebugInfo();
                 document.querySelectorAll('.pseudocode-line').forEach(line => {
                     line.classList.remove('current', 'completed', 'error');
                 });
@@ -983,6 +1293,10 @@ PRINT "Maximum: " + max`
                     this.autoRunning = false;
                     this.updateButtons();
                 } else {
+                    // If not running, start the execution first
+                    if (!this.isRunning) {
+                        this.start();
+                    }
                     this.autoRunning = true;
                     this.updateButtons();
                     this.autoExecute();
@@ -993,7 +1307,9 @@ PRINT "Maximum: " + max`
                 if (this.autoRunning && this.isRunning) {
                     this.nextStep();
                     if (this.isRunning) {
-                        setTimeout(() => this.autoExecute(), 1500);
+                        // Calculate delay based on speed (1=slow, 10=fast)
+                        const delay = 3100 - (this.autoRunSpeed * 300);
+                        setTimeout(() => this.autoExecute(), delay);
                     }
                 }
             }
@@ -1001,27 +1317,43 @@ PRINT "Maximum: " + max`
             nextStep() {
                 if (!this.isRunning) return;
 
+                // Save state before executing
+                this.saveExecutionState();
+
                 this.currentStep++;
+                this.stepCounter++;
                 
                 if (this.currentStep >= this.parsedCode.length) {
                     this.isRunning = false;
                     this.autoRunning = false;
                     this.updateButtons();
+                    this.updateDebugInfo();
                     return;
+                }
+
+                // Check for breakpoint
+                if (this.breakpoints.has(this.currentStep) && this.autoRunning) {
+                    this.autoRunning = false;
+                    this.updateButtons();
                 }
 
                 this.highlightLine(this.currentStep);
                 this.executeStep(this.parsedCode[this.currentStep]);
                 this.updateButtons();
+                this.updateDebugInfo();
             }
 
             executeStep(line) {
                 try {
-                    if (line.startsWith('SET ')) {
-                        const parts = line.substring(4).split(' = ');
+                    // Handle assignment statements
+                    if (line.includes('←') && !line.startsWith('IF ') && !line.startsWith('ELSE IF ') && 
+                        !line.startsWith('WHILE ') && !line.startsWith('FOR ') && 
+                        !line.startsWith('OUTPUT ') && !line.startsWith('PRINT ')) {
+                        
+                        const parts = line.split('←');
                         if (parts.length === 2) {
                             const varName = parts[0].trim();
-                            const value = this.evaluateExpression(parts[1]);
+                            const value = this.evaluateExpression(parts[1].trim());
                             this.updateVariable(varName, value);
                         }
                     } else if (line.startsWith('OUTPUT ')) {
@@ -1033,33 +1365,80 @@ PRINT "Maximum: " + max`
                         const value = this.evaluateExpression(expr);
                         this.addOutput(String(value));
                     } else if (line.startsWith('IF ')) {
-                        const condition = line.substring(3, line.indexOf(' THEN'));
-                        const result = this.evaluateCondition(condition);
-                        if (!result) {
-                            // Skip to END IF
-                            this.skipToEnd('IF');
-                        }
-                    } else if (line.startsWith('WHILE ')) {
-                        const condition = line.substring(6, line.indexOf(' DO'));
-                        const result = this.evaluateCondition(condition);
-                        if (result) {
-                            this.executionContext.loopStacks.push({
-                                type: 'WHILE',
+                        const thenIndex = line.indexOf('THEN');
+                        if (thenIndex > 0) {
+                            const condition = line.substring(3, thenIndex).trim();
+                            const result = this.evaluateCondition(condition);
+                            
+                            this.executionContext.ifStack.push({
                                 startLine: this.currentStep,
-                                condition: condition
+                                conditionMet: result,
+                                hasExecuted: result
                             });
+                            
+                            if (!result) {
+                                this.skipToNextIfBlock();
+                            }
+                        }
+                    } else if (line.startsWith('ELSE IF ')) {
+                        const currentIf = this.executionContext.ifStack[this.executionContext.ifStack.length - 1];
+                        if (currentIf && !currentIf.hasExecuted) {
+                            const thenIndex = line.indexOf('THEN');
+                            if (thenIndex > 0) {
+                                const condition = line.substring(8, thenIndex).trim();
+                                const result = this.evaluateCondition(condition);
+                                
+                                if (result) {
+                                    currentIf.hasExecuted = true;
+                                    currentIf.conditionMet = true;
+                                } else {
+                                    this.skipToNextIfBlock();
+                                }
+                            }
                         } else {
-                            this.skipToEnd('WHILE');
+                            this.skipToEndIf();
+                        }
+                    } else if (line === 'ELSE') {
+                        const currentIf = this.executionContext.ifStack[this.executionContext.ifStack.length - 1];
+                        if (currentIf && currentIf.hasExecuted) {
+                            this.skipToEndIf();
+                        }
+                    } else if (line === 'END IF') {
+                        this.executionContext.ifStack.pop();
+                    } else if (line.startsWith('WHILE ')) {
+                        const doIndex = line.indexOf('DO');
+                        if (doIndex > 0) {
+                            const condition = line.substring(6, doIndex).trim();
+                            const result = this.evaluateCondition(condition);
+                            if (result) {
+                                this.executionContext.loopStacks.push({
+                                    type: 'WHILE',
+                                    startLine: this.currentStep,
+                                    condition: condition
+                                });
+                            } else {
+                                this.skipToEnd('WHILE');
+                            }
+                        }
+                    } else if (line === 'END WHILE') {
+                        const loop = this.executionContext.loopStacks[this.executionContext.loopStacks.length - 1];
+                        if (loop && loop.type === 'WHILE') {
+                            const result = this.evaluateCondition(loop.condition);
+                            if (result) {
+                                this.currentStep = loop.startLine - 1;
+                            } else {
+                                this.executionContext.loopStacks.pop();
+                            }
                         }
                     } else if (line.startsWith('FOR ')) {
-                        // Simple FOR loop implementation
-                        const match = line.match(/FOR (\w+) = (.+) TO (.+) DO/);
+                        const match = line.match(/FOR (\w+) ← (.+) TO (.+) DO/);
                         if (match) {
                             const varName = match[1];
                             const startVal = this.evaluateExpression(match[2]);
                             const endVal = this.evaluateExpression(match[3]);
                             
-                            if (!this.variables[varName] || this.variables[varName] < startVal) {
+                            // Only set to start value if this is a fresh entry to the loop
+                            if (!this.executionContext.loopStacks.find(loop => loop.type === 'FOR' && loop.varName === varName)) {
                                 this.updateVariable(varName, startVal);
                             }
                             
@@ -1074,24 +1453,17 @@ PRINT "Maximum: " + max`
                                 this.skipToEnd('FOR');
                             }
                         }
-                    } else if (line === 'END WHILE') {
-                        const loop = this.executionContext.loopStacks[this.executionContext.loopStacks.length - 1];
-                        if (loop && loop.type === 'WHILE') {
-                            const result = this.evaluateCondition(loop.condition);
-                            if (result) {
-                                this.currentStep = loop.startLine; // Jump back to WHILE
-                            } else {
-                                this.executionContext.loopStacks.pop();
-                            }
-                        }
                     } else if (line === 'END FOR') {
                         const loop = this.executionContext.loopStacks[this.executionContext.loopStacks.length - 1];
                         if (loop && loop.type === 'FOR') {
                             const currentVal = this.variables[loop.varName];
                             if (currentVal < loop.endVal) {
+                                // Increment the loop variable
                                 this.updateVariable(loop.varName, currentVal + 1);
-                                this.currentStep = loop.startLine; // Jump back to FOR
+                                // Jump back to the line after FOR (not the FOR line itself)
+                                this.currentStep = loop.startLine;
                             } else {
+                                // Loop is complete, remove from stack
                                 this.executionContext.loopStacks.pop();
                             }
                         }
@@ -1101,6 +1473,45 @@ PRINT "Maximum: " + max`
                     const currentLine = document.querySelector(`[data-line="${this.currentStep}"]`);
                     if (currentLine) {
                         currentLine.classList.add('error');
+                    }
+                }
+            }
+
+            skipToNextIfBlock() {
+                let depth = 0;
+                while (this.currentStep + 1 < this.parsedCode.length) {
+                    this.currentStep++;
+                    const line = this.parsedCode[this.currentStep];
+                    
+                    if (line.startsWith('IF ')) {
+                        depth++;
+                    } else if (line === 'END IF') {
+                        if (depth === 0) {
+                            this.currentStep--;
+                            return;
+                        }
+                        depth--;
+                    } else if (depth === 0 && (line.startsWith('ELSE IF ') || line === 'ELSE')) {
+                        this.currentStep--;
+                        return;
+                    }
+                }
+            }
+
+            skipToEndIf() {
+                let depth = 0;
+                while (this.currentStep + 1 < this.parsedCode.length) {
+                    this.currentStep++;
+                    const line = this.parsedCode[this.currentStep];
+                    
+                    if (line.startsWith('IF ')) {
+                        depth++;
+                    } else if (line === 'END IF') {
+                        if (depth === 0) {
+                            this.currentStep--;
+                            return;
+                        }
+                        depth--;
                     }
                 }
             }
@@ -1127,21 +1538,59 @@ PRINT "Maximum: " + max`
             }
 
             updateButtons() {
-                const parseBtn = document.getElementById('parseBtn');
                 const startBtn = document.getElementById('startBtn');
                 const nextBtn = document.getElementById('nextBtn');
+                const prevBtn = document.getElementById('prevBtn');
                 const autoBtn = document.getElementById('autoBtn');
 
                 startBtn.disabled = this.parsedCode.length === 0 || this.isRunning;
                 nextBtn.disabled = !this.isRunning || this.autoRunning;
-                autoBtn.disabled = !this.isRunning;
+                prevBtn.disabled = !this.isRunning || this.executionHistory.length === 0;
+                autoBtn.disabled = this.parsedCode.length === 0;
                 autoBtn.textContent = this.autoRunning ? 'Pause Auto' : 'Auto Run';
+            }
+
+            updateDebugInfo() {
+                document.getElementById('stepCounter').textContent = this.stepCounter;
+                document.getElementById('breakpointCount').textContent = this.breakpoints.size;
+                
+                let status = 'Ready';
+                if (this.isRunning) {
+                    if (this.autoRunning) {
+                        status = 'Auto Running';
+                    } else if (this.breakpoints.has(this.currentStep)) {
+                        status = 'Paused at Breakpoint';
+                    } else {
+                        status = 'Running (Manual)';
+                    }
+                } else if (this.currentStep >= this.parsedCode.length - 1 && this.stepCounter > 0) {
+                    status = 'Completed';
+                }
+                
+                document.getElementById('executionStatus').textContent = status;
+            }
+
+            updateSpeedLabel() {
+                const speedLabel = document.getElementById('speedLabel');
+                const speedNames = {
+                    1: 'Very Slow',
+                    2: 'Slow',
+                    3: 'Slow',
+                    4: 'Medium',
+                    5: 'Normal',
+                    6: 'Normal',
+                    7: 'Fast',
+                    8: 'Fast',
+                    9: 'Very Fast',
+                    10: 'Maximum'
+                };
+                speedLabel.textContent = speedNames[this.autoRunSpeed] || 'Normal';
             }
         }
 
         // Initialize the animator when the page loads
         window.addEventListener('DOMContentLoaded', () => {
-            new CustomPseudocodeAnimator();
+            new MathematicalPseudocodeAnimator();
         });
     </script>
 </body>
