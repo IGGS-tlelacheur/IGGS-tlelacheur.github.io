@@ -593,6 +593,10 @@ Supported commands:
 • WHILE condition DO ... END WHILE
 • FOR variable ← start TO end DO ... END FOR
 
+Boolean logic:
+• AND, OR for combining conditions
+• Use parentheses for grouping: (x > 5 AND y < 10) OR z = 0
+
 Use ← for assignment, = for equality, ^ for powers
 Click line numbers to set breakpoints!"></textarea>
                 <div id="validationMessage" class="validation-message"></div>
@@ -604,6 +608,7 @@ Click line numbers to set breakpoints!"></textarea>
                     <button class="example-btn" data-example="loop">While Loop</button>
                     <button class="example-btn" data-example="factorial">Factorial</button>
                     <button class="example-btn" data-example="squares">Square Numbers</button>
+                    <button class="example-btn" data-example="logical">Logical Operators (AND/OR)</button>
                 </div>
                 
                 <div class="help-text">
@@ -648,9 +653,15 @@ Click line numbers to set breakpoints!"></textarea>
                     <h3>New Features</h3>
                     
                     <div class="keyword-item">
+                        <div class="keyword-syntax">Boolean Logic (AND/OR)</div>
+                        <div class="keyword-description">Combine multiple conditions using AND and OR operators. Use parentheses for grouping.</div>
+                        <div class="keyword-example">IF x > 5 AND y < 10 THEN<br>IF a = 1 OR b = 2 THEN<br>IF (x > 0 AND y > 0) OR z = 0 THEN</div>
+                    </div>
+                    
+                    <div class="keyword-item">
                         <div class="keyword-syntax">Breakpoints</div>
-                        <div class="keyword-description">Click on line numbers to set/remove breakpoints. Execution will pause at breakpoints.</div>
-                        <div class="keyword-example">Click the gray line number → Red dot appears → Execution pauses there</div>
+                        <div class="keyword-description">Click on line numbers to set/remove breakpoints. Execution will pause BEFORE executing the breakpoint line.</div>
+                        <div class="keyword-example">Click the gray line number → Red dot appears → Execution pauses before that line</div>
                     </div>
 
                     <div class="keyword-item">
@@ -704,44 +715,19 @@ Click line numbers to set breakpoints!"></textarea>
                 this.variables = {};
                 this.output = [];
                 this.parsedCode = [];
-                this.executionContext = { loopStacks: [], ifStack: [] };
+                this.executionContext = { loopStacks: [], ifStack: [], breakpointPaused: false };
                 this.autoRunSpeed = 5;
                 this.breakpoints = new Set();
                 this.executionHistory = [];
                 this.stepCounter = 0;
                 
                 this.examples = {
-                    simple: `x ← 5
-y ← 10
-sum ← x + y
-PRINT "Sum: " + sum`,
-
-                    power: `base ← 3
-exponent ← 4
-result ← base ^ exponent
-PRINT base + " to the power of " + exponent + " = " + result`,
-
-                    squares: `FOR i ← 1 TO 5 DO
-    square ← i ^ 2
-    PRINT "Square of " + i + " is " + square
-END FOR`,
-                    
-                    loop: `count ← 0
-total ← 0
-WHILE count < 5 DO
-    total ← total + count
-    count ← count + 1
-END WHILE
-PRINT "Total: " + total`,
-
-                    factorial: `n ← 5
-factorial ← 1
-i ← 1
-WHILE i <= n DO
-    factorial ← factorial * i
-    i ← i + 1
-END WHILE
-PRINT "Factorial of " + n + " is " + factorial`
+                    simple: 'x ← 5\ny ← 10\nsum ← x + y\nPRINT "Sum: " + sum',
+                    power: 'base ← 3\nexponent ← 4\nresult ← base ^ exponent\nPRINT base + " to the power of " + exponent + " = " + result',
+                    squares: 'FOR i ← 1 TO 5 DO\n    square ← i ^ 2\n    PRINT "Square of " + i + " is " + square\nEND FOR',
+                    loop: 'count ← 0\ntotal ← 0\nWHILE count < 5 DO\n    total ← total + count\n    count ← count + 1\nEND WHILE\nPRINT "Total: " + total',
+                    factorial: 'n ← 5\nfactorial ← 1\ni ← 1\nWHILE i <= n DO\n    factorial ← factorial * i\n    i ← i + 1\nEND WHILE\nPRINT "Factorial of " + n + " is " + factorial',
+                    logical: 'x ← 7\ny ← 3\nz ← 0\n\nIF x > 5 AND y < 10 THEN\n    PRINT "Both conditions met"\nEND IF\n\nIF x < 5 OR y < 5 THEN\n    PRINT "At least one is less than 5"\nEND IF\n\nIF (x > 0 AND y > 0) OR z = 0 THEN\n    PRINT "Complex condition is true"\nEND IF'
                 };
                 
                 this.initializeEventListeners();
@@ -756,7 +742,6 @@ PRINT "Factorial of " + n + " is " + factorial`
                 document.getElementById('autoBtn').addEventListener('click', () => this.toggleAutoRun());
                 document.getElementById('helpBtn').addEventListener('click', () => this.showHelp());
                 
-                // Tab key support
                 const codeInput = document.getElementById('codeInput');
                 codeInput.addEventListener('keydown', (e) => {
                     if (e.key === 'Tab') {
@@ -764,13 +749,11 @@ PRINT "Factorial of " + n + " is " + factorial`
                         const start = codeInput.selectionStart;
                         const end = codeInput.selectionEnd;
                         const value = codeInput.value;
-                        const newValue = value.substring(0, start) + '    ' + value.substring(end);
-                        codeInput.value = newValue;
+                        codeInput.value = value.substring(0, start) + '    ' + value.substring(end);
                         codeInput.selectionStart = codeInput.selectionEnd = start + 4;
                     }
                 });
                 
-                // Modal listeners
                 const modal = document.getElementById('helpModal');
                 document.querySelector('.close').addEventListener('click', () => {
                     modal.style.display = 'none';
@@ -779,7 +762,6 @@ PRINT "Factorial of " + n + " is " + factorial`
                     if (e.target === modal) modal.style.display = 'none';
                 });
                 
-                // Example buttons
                 document.querySelectorAll('.example-btn').forEach(btn => {
                     btn.addEventListener('click', (e) => {
                         const example = e.target.dataset.example;
@@ -788,7 +770,6 @@ PRINT "Factorial of " + n + " is " + factorial`
                     });
                 });
 
-                // Speed slider
                 const speedSlider = document.getElementById('speedSlider');
                 speedSlider.addEventListener('input', (e) => {
                     this.autoRunSpeed = parseInt(e.target.value);
@@ -799,24 +780,18 @@ PRINT "Factorial of " + n + " is " + factorial`
 
             parseCode() {
                 let rawInput = document.getElementById('codeInput').value;
-                
-                // STEP 1: Replace ^ with ** immediately
                 rawInput = rawInput.replace(/\^/g, '**');
                 
-                // STEP 2: Clean and process the input
                 const lines = rawInput.split('\n')
                     .map(line => line.trim())
                     .filter(line => line.length > 0)
                     .map(line => {
-                        // Convert <- to ←
                         line = line.replace(/<-/g, '←');
-                        // Normalize keywords
-                        line = line.replace(/\b(if|then|else|elseif|end|while|do|for|to|output|print|input)\b/gi, 
+                        line = line.replace(/\b(if|then|else|elseif|end|while|do|for|to|output|print|input|and|or)\b/gi, 
                             match => match.toUpperCase());
                         return line;
                     });
 
-                // STEP 3: Validate
                 const validation = this.validateCode(lines);
                 const messageDiv = document.getElementById('validationMessage');
                 
@@ -832,9 +807,8 @@ PRINT "Factorial of " + n + " is " + factorial`
                 
                 messageDiv.className = 'validation-message success';
                 messageDiv.style.display = 'block';
-                messageDiv.innerHTML = '<strong>✓ Code parsed successfully!</strong>';
+                messageDiv.innerHTML = '<strong>✔ Code parsed successfully!</strong>';
                 
-                // STEP 4: Store processed code and reset execution state
                 this.parsedCode = lines;
                 this.breakpoints.clear();
                 this.executionHistory = [];
@@ -849,7 +823,6 @@ PRINT "Factorial of " + n + " is " + factorial`
 
             validateCode(lines) {
                 const errors = [];
-                const warnings = [];
                 const blockStack = [];
 
                 for (let i = 0; i < lines.length; i++) {
@@ -887,14 +860,11 @@ PRINT "Factorial of " + n + " is " + factorial`
                     errors.push(`Missing END statements for: ${blockStack.join(', ')}`);
                 }
 
-                return { errors, warnings };
+                return { errors };
             }
 
             applySyntaxHighlighting(line, lineElement) {
-                // Clear existing content
                 lineElement.innerHTML = '';
-                
-                // Split line into tokens for highlighting
                 const tokens = this.tokenizeLine(line);
                 
                 tokens.forEach(token => {
@@ -910,7 +880,6 @@ PRINT "Factorial of " + n + " is " + factorial`
                 let i = 0;
                 
                 while (i < line.length) {
-                    // Skip whitespace but preserve it
                     if (line[i] === ' ') {
                         let spaces = '';
                         while (i < line.length && line[i] === ' ') {
@@ -921,7 +890,6 @@ PRINT "Factorial of " + n + " is " + factorial`
                         continue;
                     }
                     
-                    // Check for strings
                     if (line[i] === '"') {
                         let str = '"';
                         i++;
@@ -929,12 +897,11 @@ PRINT "Factorial of " + n + " is " + factorial`
                             str += line[i];
                             i++;
                         }
-                        if (i < line.length) str += line[i++]; // closing quote
+                        if (i < line.length) str += line[i++];
                         tokens.push({ text: str, type: 'string' });
                         continue;
                     }
                     
-                    // Check for numbers
                     if (/\d/.test(line[i])) {
                         let num = '';
                         while (i < line.length && /[\d.]/.test(line[i])) {
@@ -945,22 +912,19 @@ PRINT "Factorial of " + n + " is " + factorial`
                         continue;
                     }
                     
-                    // Check for assignment arrow
                     if (line[i] === '←') {
                         tokens.push({ text: '←', type: 'assignment' });
                         i++;
                         continue;
                     }
                     
-                    // Check for operators
                     if (line.substr(i, 2) === '**') {
                         tokens.push({ text: '**', type: 'operator' });
                         i += 2;
                         continue;
                     }
                     
-                    if (/[+\-*/><=]/.test(line[i])) {
-                        // Check for compound operators
+                    if (/[+\-*/><=()]/.test(line[i])) {
                         if (i + 1 < line.length && line.substr(i, 2).match(/>=|<=/)) {
                             tokens.push({ text: line.substr(i, 2), type: 'operator' });
                             i += 2;
@@ -971,7 +935,6 @@ PRINT "Factorial of " + n + " is " + factorial`
                         continue;
                     }
                     
-                    // Check for words (keywords or variables)
                     if (/[a-zA-Z_]/.test(line[i])) {
                         let word = '';
                         while (i < line.length && /[a-zA-Z0-9_]/.test(line[i])) {
@@ -979,13 +942,12 @@ PRINT "Factorial of " + n + " is " + factorial`
                             i++;
                         }
                         
-                        const keywords = ['IF', 'THEN', 'ELSE', 'ELSEIF', 'END', 'WHILE', 'DO', 'FOR', 'TO', 'OUTPUT', 'PRINT', 'INPUT'];
+                        const keywords = ['IF', 'THEN', 'ELSE', 'ELSEIF', 'END', 'WHILE', 'DO', 'FOR', 'TO', 'OUTPUT', 'PRINT', 'INPUT', 'AND', 'OR'];
                         const type = keywords.includes(word) ? 'keyword' : 'variable';
                         tokens.push({ text: word, type });
                         continue;
                     }
                     
-                    // Everything else (punctuation, etc.)
                     tokens.push({ text: line[i], type: '' });
                     i++;
                 }
@@ -1025,12 +987,10 @@ PRINT "Factorial of " + n + " is " + factorial`
                     
                     const isBreakpoint = this.breakpoints.has(index);
                     
-                    // Create line container
                     const lineDiv = document.createElement('div');
                     lineDiv.className = 'pseudocode-line';
                     lineDiv.dataset.line = index;
                     
-                    // Create line number
                     const lineNumDiv = document.createElement('div');
                     lineNumDiv.className = `line-number ${isBreakpoint ? 'breakpoint' : ''}`;
                     lineNumDiv.dataset.line = index;
@@ -1040,14 +1000,11 @@ PRINT "Factorial of " + n + " is " + factorial`
                         this.toggleBreakpoint(lineIndex);
                     });
                     
-                    // Create line content
                     const lineContentDiv = document.createElement('div');
                     lineContentDiv.className = 'line-content';
                     
-                    // Apply syntax highlighting
                     this.applySyntaxHighlighting(indentedLine, lineContentDiv);
                     
-                    // Assemble the line
                     lineDiv.appendChild(lineNumDiv);
                     lineDiv.appendChild(lineContentDiv);
                     pseudocodeDiv.appendChild(lineDiv);
@@ -1133,12 +1090,10 @@ PRINT "Factorial of " + n + " is " + factorial`
             evaluateExpression(expr) {
                 expr = expr.trim();
                 
-                // Handle string concatenation
                 if (expr.includes('+') && (expr.includes('"') || expr.includes("'"))) {
                     return this.evaluateStringExpression(expr);
                 }
                 
-                // Handle array access
                 if (expr.includes('[') && expr.includes(']')) {
                     const match = expr.match(/(\w+)\[(.+)\]/);
                     if (match) {
@@ -1149,30 +1104,25 @@ PRINT "Factorial of " + n + " is " + factorial`
                     }
                 }
                 
-                // Handle simple variable references
                 if (/^\w+$/.test(expr) && this.variables.hasOwnProperty(expr)) {
                     return this.variables[expr];
                 }
                 
-                // Handle numeric literals
                 if (/^-?\d+(\.\d+)?$/.test(expr)) {
                     return parseFloat(expr);
                 }
                 
-                // Handle string literals
                 if ((expr.startsWith('"') && expr.endsWith('"')) || 
                     (expr.startsWith("'") && expr.endsWith("'"))) {
                     return expr.slice(1, -1);
                 }
                 
-                // Handle array literals
                 if (expr.startsWith('[') && expr.endsWith(']')) {
                     const content = expr.slice(1, -1).trim();
                     if (content === '') return [];
                     return content.split(',').map(item => this.evaluateExpression(item.trim()));
                 }
                 
-                // Handle arithmetic expressions
                 return this.evaluateArithmetic(expr);
             }
 
@@ -1189,7 +1139,6 @@ PRINT "Factorial of " + n + " is " + factorial`
             evaluateArithmetic(expr) {
                 let processedExpr = expr;
                 
-                // Replace variables with their values in parentheses
                 const sortedVars = Object.keys(this.variables).sort((a, b) => b.length - a.length);
                 for (const name of sortedVars) {
                     const value = this.variables[name];
@@ -1210,6 +1159,41 @@ PRINT "Factorial of " + n + " is " + factorial`
                 condition = condition.trim();
                 condition = condition.replace(/≥/g, '>=').replace(/≤/g, '<=');
                 
+                // Handle parentheses recursively
+                while (condition.includes('(')) {
+                    condition = condition.replace(/\([^()]+\)/g, (match) => {
+                        const inner = match.slice(1, -1);
+                        return this.evaluateCondition(inner) ? 'TRUE' : 'FALSE';
+                    });
+                }
+                
+                // Handle OR operator (lower precedence)
+                if (condition.includes(' OR ')) {
+                    const parts = condition.split(' OR ');
+                    for (const part of parts) {
+                        if (this.evaluateCondition(part.trim())) {
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+                
+                // Handle AND operator (higher precedence)
+                if (condition.includes(' AND ')) {
+                    const parts = condition.split(' AND ');
+                    for (const part of parts) {
+                        if (!this.evaluateCondition(part.trim())) {
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+                
+                // Handle boolean literals from parentheses evaluation
+                if (condition === 'TRUE') return true;
+                if (condition === 'FALSE') return false;
+                
+                // Handle simple comparisons
                 const operators = ['>=', '<=', '>', '<', '='];
                 for (const op of operators) {
                     if (condition.includes(op)) {
@@ -1265,7 +1249,7 @@ PRINT "Factorial of " + n + " is " + factorial`
                 this.isRunning = true;
                 this.currentStep = -1;
                 this.stepCounter = 0;
-                this.executionContext = { loopStacks: [], ifStack: [] };
+                this.executionContext = { loopStacks: [], ifStack: [], breakpointPaused: false };
                 this.executionHistory = [];
                 this.initializeVariables();
                 this.updateButtons();
@@ -1278,7 +1262,7 @@ PRINT "Factorial of " + n + " is " + factorial`
                 this.autoRunning = false;
                 this.currentStep = -1;
                 this.stepCounter = 0;
-                this.executionContext = { loopStacks: [], ifStack: [] };
+                this.executionContext = { loopStacks: [], ifStack: [], breakpointPaused: false };
                 this.executionHistory = [];
                 this.initializeVariables();
                 this.updateButtons();
@@ -1293,7 +1277,6 @@ PRINT "Factorial of " + n + " is " + factorial`
                     this.autoRunning = false;
                     this.updateButtons();
                 } else {
-                    // If not running, start the execution first
                     if (!this.isRunning) {
                         this.start();
                     }
@@ -1307,7 +1290,6 @@ PRINT "Factorial of " + n + " is " + factorial`
                 if (this.autoRunning && this.isRunning) {
                     this.nextStep();
                     if (this.isRunning) {
-                        // Calculate delay based on speed (1=slow, 10=fast)
                         const delay = 3100 - (this.autoRunSpeed * 300);
                         setTimeout(() => this.autoExecute(), delay);
                     }
@@ -1317,11 +1299,7 @@ PRINT "Factorial of " + n + " is " + factorial`
             nextStep() {
                 if (!this.isRunning) return;
 
-                // Save state before executing
-                this.saveExecutionState();
-
                 this.currentStep++;
-                this.stepCounter++;
                 
                 if (this.currentStep >= this.parsedCode.length) {
                     this.isRunning = false;
@@ -1331,11 +1309,24 @@ PRINT "Factorial of " + n + " is " + factorial`
                     return;
                 }
 
-                // Check for breakpoint
-                if (this.breakpoints.has(this.currentStep) && this.autoRunning) {
-                    this.autoRunning = false;
+                // Check for breakpoint BEFORE executing
+                if (this.breakpoints.has(this.currentStep) && !this.executionContext.breakpointPaused) {
+                    this.executionContext.breakpointPaused = true;
+                    this.highlightLine(this.currentStep);
+                    
+                    if (this.autoRunning) {
+                        this.autoRunning = false;
+                    }
+                    
                     this.updateButtons();
+                    this.updateDebugInfo();
+                    return;
                 }
+
+                this.executionContext.breakpointPaused = false;
+
+                this.saveExecutionState();
+                this.stepCounter++;
 
                 this.highlightLine(this.currentStep);
                 this.executeStep(this.parsedCode[this.currentStep]);
@@ -1345,7 +1336,6 @@ PRINT "Factorial of " + n + " is " + factorial`
 
             executeStep(line) {
                 try {
-                    // Handle assignment statements
                     if (line.includes('←') && !line.startsWith('IF ') && !line.startsWith('ELSE IF ') && 
                         !line.startsWith('WHILE ') && !line.startsWith('FOR ') && 
                         !line.startsWith('OUTPUT ') && !line.startsWith('PRINT ')) {
@@ -1437,7 +1427,6 @@ PRINT "Factorial of " + n + " is " + factorial`
                             const startVal = this.evaluateExpression(match[2]);
                             const endVal = this.evaluateExpression(match[3]);
                             
-                            // Only set to start value if this is a fresh entry to the loop
                             if (!this.executionContext.loopStacks.find(loop => loop.type === 'FOR' && loop.varName === varName)) {
                                 this.updateVariable(varName, startVal);
                             }
@@ -1458,12 +1447,9 @@ PRINT "Factorial of " + n + " is " + factorial`
                         if (loop && loop.type === 'FOR') {
                             const currentVal = this.variables[loop.varName];
                             if (currentVal < loop.endVal) {
-                                // Increment the loop variable
                                 this.updateVariable(loop.varName, currentVal + 1);
-                                // Jump back to the line after FOR (not the FOR line itself)
                                 this.currentStep = loop.startLine;
                             } else {
-                                // Loop is complete, remove from stack
                                 this.executionContext.loopStacks.pop();
                             }
                         }
