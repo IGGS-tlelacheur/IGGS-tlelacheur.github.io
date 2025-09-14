@@ -394,21 +394,25 @@
             margin-top: 15px;
         }
 
-        .example-btn {
-            display: block;
-            width: 100%;
-            margin-bottom: 8px;
+        .example-dropdown {
             padding: 8px 12px;
             background: #e3f2fd;
             border: 1px solid #90caf9;
             border-radius: 5px;
             cursor: pointer;
             font-size: 13px;
+            min-width: 200px;
             transition: all 0.2s ease;
         }
 
-        .example-btn:hover {
+        .example-dropdown:hover {
             background: #bbdefb;
+        }
+
+        .example-dropdown:focus {
+            outline: none;
+            border-color: #42a5f5;
+            box-shadow: 0 0 5px rgba(66, 165, 245, 0.3);
         }
 
         .help-text {
@@ -610,14 +614,17 @@ Click line numbers to set breakpoints!"></textarea>
                 <div id="validationMessage" class="validation-message"></div>
                 
                 <div class="examples">
-                    <div style="font-weight: bold; margin-bottom: 8px; color: #2c3e50;">Quick Examples:</div>
-                    <button class="example-btn" data-example="simple">Simple Calculation</button>
-                    <button class="example-btn" data-example="power">Powers & Exponents</button>
-                    <button class="example-btn" data-example="loop">While Loop</button>
-                    <button class="example-btn" data-example="factorial">Factorial</button>
-                    <button class="example-btn" data-example="squares">Square Numbers</button>
-                    <button class="example-btn" data-example="logical">Logical Operators (AND/OR)</button>
-                    <button class="example-btn" data-example="functions">Functions & Methods</button>
+                    <label for="exampleSelect" style="font-weight: bold; margin-right: 8px; color: #2c3e50;">Quick Examples:</label>
+                    <select id="exampleSelect" class="example-dropdown">
+                        <option value="">-- Select an example --</option>
+                        <option value="simple">Simple Calculation</option>
+                        <option value="power">Powers & Exponents</option>
+                        <option value="loop">While Loop</option>
+                        <option value="factorial">Factorial</option>
+                        <option value="squares">Square Numbers</option>
+                        <option value="logical">Logical Operators (AND/OR)</option>
+                        <option value="functions">Functions</option>
+                    </select>
                 </div>
                 
                 <div class="help-text">
@@ -746,7 +753,7 @@ Click line numbers to set breakpoints!"></textarea>
                     loop: 'BEGIN\n    count ← 0\n    total ← 0\n    WHILE count < 5 DO\n        total ← total + count\n        count ← count + 1\n    END WHILE\n    PRINT "Total: " + total\nEND',
                     factorial: 'BEGIN\n    n ← 5\n    factorial ← 1\n    i ← 1\n    WHILE i <= n DO\n        factorial ← factorial * i\n        i ← i + 1\n    END WHILE\n    PRINT "Factorial of " + n + " is " + factorial\nEND',
                     logical: 'BEGIN\n    x ← 7\n    y ← 3\n    z ← 0\n    \n    IF x > 5 AND y < 10 THEN\n        PRINT "Both conditions met"\n    END IF\n    \n    IF x < 5 OR y < 5 THEN\n        PRINT "At least one is less than 5"\n    END IF\n    \n    IF (x > 0 AND y > 0) OR z = 0 THEN\n        PRINT "Complex condition is true"\n    END IF\nEND',
-                    functions: 'FUNCTION square(x)\n    result ← x * x\n    RETURN result\nEND FUNCTION\n\nFUNCTION factorial(n)\n    result ← 1\n    i ← 1\n    WHILE i <= n DO\n        result ← result * i\n        i ← i + 1\n    END WHILE\n    RETURN result\nEND FUNCTION\n\nFUNCTION add(a, b)\n    RETURN a + b\nEND FUNCTION\n\nBEGIN\n    num ← 5\n    sq ← square(num)\n    fact ← factorial(num)\n    sum ← add(sq, fact)\n    PRINT "Square of " + num + " is " + sq\n    PRINT "Factorial of " + num + " is " + fact\n    PRINT "Sum of square and factorial is " + sum\nEND'
+                    functions: 'FUNCTION square(x)\n    result ← x * x\n    RETURN result\nEND FUNCTION\n\nFUNCTION add(a, b)\n    RETURN a + b\nEND FUNCTION\n\nBEGIN\n    num ← 5\n    sq ← square(num)\n    doubled ← add(sq, sq)\n    PRINT "Square of " + num + " is " + sq\n    PRINT "Double the square is " + doubled\nEND'
                 };
                 
                 this.initializeEventListeners();
@@ -781,12 +788,14 @@ Click line numbers to set breakpoints!"></textarea>
                     if (e.target === modal) modal.style.display = 'none';
                 });
                 
-                document.querySelectorAll('.example-btn').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        const example = e.target.dataset.example;
+                document.getElementById('exampleSelect').addEventListener('change', (e) => {
+                    const example = e.target.value;
+                    if (example && this.examples[example]) {
                         document.getElementById('codeInput').value = this.examples[example];
                         this.parseCode();
-                    });
+                        // Reset the dropdown to show placeholder
+                        e.target.value = '';
+                    }
                 });
 
                 const speedSlider = document.getElementById('speedSlider');
