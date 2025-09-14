@@ -626,6 +626,8 @@ Click line numbers to set breakpoints!"></textarea>
                         <option value="functions">Functions</option>
                         <option value="methods">Methods</option>
                         <option value="steps">FOR Loops with Steps</option>
+                        <option value="bisection">Bisection Method</option>
+                        <option value="newton">Newton's Method</option>
                     </select>
                 </div>
                 
@@ -766,7 +768,9 @@ Click line numbers to set breakpoints!"></textarea>
                     logical: 'BEGIN\n    x ← 7\n    y ← 3\n    z ← 0\n    \n    IF x > 5 AND y < 10 THEN\n        PRINT "Both conditions met"\n    END IF\n    \n    IF x < 5 OR y < 5 THEN\n        PRINT "At least one is less than 5"\n    END IF\n    \n    IF (x > 0 AND y > 0) OR z = 0 THEN\n        PRINT "Complex condition is true"\n    END IF\nEND',
                     functions: 'FUNCTION square(x)\n    result ← x * x\n    RETURN result\nEND FUNCTION\n\nFUNCTION add(a, b)\n    RETURN a + b\nEND FUNCTION\n\nBEGIN\n    num ← 5\n    sq ← square(num)\n    doubled ← add(sq, sq)\n    PRINT "Square of " + num + " is " + sq\n    PRINT "Double the square is " + doubled\nEND',
                     methods: 'METHOD printGreeting(name)\n    PRINT "Hello, " + name + "!"\nEND METHOD\n\nMETHOD showInfo(value, label)\n    PRINT label + ": " + value\nEND METHOD\n\nBEGIN\n    username ← "Alice"\n    age ← 25\n    printGreeting(username)\n    showInfo(age, "Age")\n    showInfo(username, "Name")\nEND',
-                    steps: 'BEGIN\n    PRINT "Odd numbers from 1 to 10:"\n    FOR i ← 1 TO 10 STEP 2 DO\n        PRINT i\n    END FOR\n    \n    PRINT "Countdown from 10 to 0:"\n    FOR i ← 10 TO 0 STEP -1 DO\n        PRINT i\n    END FOR\n    \n    PRINT "Multiples of 3 from 0 to 15:"\n    FOR i ← 0 TO 15 STEP 3 DO\n        PRINT i\n    END FOR\nEND'
+                    steps: 'BEGIN\n    PRINT "Odd numbers from 1 to 10:"\n    FOR i ← 1 TO 10 STEP 2 DO\n        PRINT i\n    END FOR\n    \n    PRINT "Countdown from 10 to 0:"\n    FOR i ← 10 TO 0 STEP -1 DO\n        PRINT i\n    END FOR\n    \n    PRINT "Multiples of 3 from 0 to 15:"\n    FOR i ← 0 TO 15 STEP 3 DO\n        PRINT i\n    END FOR\nEND',
+                    bisection: 'FUNCTION f(x)\n    result ← x ^ 2 - x - 1\n    RETURN result\nEND FUNCTION\n\nFUNCTION abs(x)\n    IF x < 0 THEN\n        RETURN -x\n    END IF\n    RETURN x\nEND FUNCTION\n\nBEGIN\n    PRINT "Bisection Method: Find root of x^2 - x - 1"\n    a ← 1\n    b ← 2\n    tolerance ← 0.01\n    iteration ← 0\n    \n    PRINT "Initial interval: [" + a + ", " + b + "]"\n    \n    WHILE abs(b - a) > tolerance DO\n        iteration ← iteration + 1\n        c ← (a + b) / 2\n        fc ← f(c)\n        fa ← f(a)\n        \n        PRINT "Iteration " + iteration + ": c = " + c + ", fc = " + fc\n        \n        IF fa * fc < 0 THEN\n            b ← c\n        ELSE\n            a ← c\n        END IF\n        \n        PRINT "New interval: [" + a + ", " + b + "]"\n    END WHILE\n    \n    root ← (a + b) / 2\n    rootValue ← f(root)\n    PRINT "Root found: " + root\n    PRINT "Verification: rootValue = " + rootValue\nEND',
+                    newton: 'FUNCTION f(x)\n    result ← x ^ 2 - x - 1\n    RETURN result\nEND FUNCTION\n\nFUNCTION fprime(x)\n    result ← 2 * x - 1\n    RETURN result\nEND FUNCTION\n\nFUNCTION abs(x)\n    IF x < 0 THEN\n        result ← -x\n    ELSE\n        result ← x\n    END IF\n    RETURN result\nEND FUNCTION\n\nBEGIN\n    PRINT "Newton\'s Method: Find root of x^2 - x - 1"\n    x0 ← 1.5\n    tolerance ← 0.01\n    iteration ← 0\n    maxIterations ← 20\n    converged ← 0\n    \n    PRINT "Starting point: x0 = " + x0\n    \n    WHILE iteration < maxIterations AND converged = 0 DO\n        fx ← f(x0)\n        fpx ← fprime(x0)\n        \n        PRINT "Iteration " + iteration + ": x = " + x0 + ", fx = " + fx\n        \n        absFx ← abs(fx)\n        IF absFx < tolerance THEN\n            PRINT "Root found with desired accuracy!"\n            PRINT "Final result: x = " + x0\n            PRINT "Verification: fx = " + fx\n            converged ← 1\n        ELSE\n            IF fpx = 0 THEN\n                PRINT "Error: Derivative is zero, cannot continue"\n                converged ← 1\n            ELSE\n                x1 ← x0 - fx / fpx\n                diff ← abs(x1 - x0)\n                \n                IF diff < tolerance THEN\n                    PRINT "Convergence achieved!"\n                    finalValue ← f(x1)\n                    PRINT "Final result: x = " + x1\n                    PRINT "Verification: finalValue = " + finalValue\n                    converged ← 1\n                ELSE\n                    x0 ← x1\n                    iteration ← iteration + 1\n                END IF\n            END IF\n        END IF\n    END WHILE\n    \n    IF converged = 0 THEN\n        PRINT "Maximum iterations reached"\n        PRINT "Final approximation: x = " + x0\n    END IF\nEND'
                 };
                 
                 this.initializeEventListeners();
@@ -1132,12 +1136,18 @@ Click line numbers to set breakpoints!"></textarea>
 
             renderVariables() {
                 const variablesDiv = document.getElementById('variables');
-                if (Object.keys(this.variables).length === 0) {
+
+                // Filter out temporary variables that start with _temp
+                const displayVariables = Object.entries(this.variables).filter(([name, value]) =>
+                    !name.startsWith('_temp')
+                );
+
+                if (displayVariables.length === 0) {
                     variablesDiv.innerHTML = '<div style="color: #999; font-style: italic;">No variables defined yet</div>';
                     return;
                 }
-                
-                variablesDiv.innerHTML = Object.entries(this.variables).map(([name, value]) => 
+
+                variablesDiv.innerHTML = displayVariables.map(([name, value]) =>
                     `<div class="variable-item" data-var="${name}">
                         <span class="variable-name">${name}:</span>
                         <span class="variable-value">${this.formatValue(value)}</span>
@@ -1384,13 +1394,68 @@ Click line numbers to set breakpoints!"></textarea>
             }
 
             evaluateStringExpression(expr) {
-                const parts = expr.split('+');
+                const parts = [];
+                let current = '';
+                let inQuotes = false;
+                let quoteChar = '';
+
+                // Parse the expression respecting quotes
+                for (let i = 0; i < expr.length; i++) {
+                    const char = expr[i];
+                    if ((char === '"' || char === "'") && !inQuotes) {
+                        inQuotes = true;
+                        quoteChar = char;
+                        current += char;
+                    } else if (char === quoteChar && inQuotes) {
+                        inQuotes = false;
+                        current += char;
+                    } else if (char === '+' && !inQuotes) {
+                        parts.push(current.trim());
+                        current = '';
+                    } else {
+                        current += char;
+                    }
+                }
+                if (current.trim()) {
+                    parts.push(current.trim());
+                }
+
                 let result = '';
                 for (const part of parts) {
-                    const value = this.evaluateExpression(part.trim());
-                    result += String(value);
+                    // Don't evaluate as expression if it's a string literal
+                    if ((part.startsWith('"') && part.endsWith('"')) ||
+                        (part.startsWith("'") && part.endsWith("'"))) {
+                        result += part.slice(1, -1);
+                    } else {
+                        // For non-string parts, use simple evaluation to avoid function call issues
+                        const value = this.evaluateSimpleExpression(part);
+                        result += String(value);
+                    }
                 }
                 return result;
+            }
+
+            evaluateSimpleExpression(expr) {
+                expr = expr.trim();
+
+                // Check if it's a variable
+                if (/^\w+$/.test(expr) && this.variables.hasOwnProperty(expr)) {
+                    return this.variables[expr];
+                }
+
+                // Check if it's a number
+                if (/^-?\d+(\.\d+)?$/.test(expr)) {
+                    return parseFloat(expr);
+                }
+
+                // Check if it's a string literal
+                if ((expr.startsWith('"') && expr.endsWith('"')) ||
+                    (expr.startsWith("'") && expr.endsWith("'"))) {
+                    return expr.slice(1, -1);
+                }
+
+                // For anything else, return as is
+                return expr;
             }
 
             evaluateArithmetic(expr) {
@@ -1450,26 +1515,209 @@ Click line numbers to set breakpoints!"></textarea>
                 if (condition === 'TRUE') return true;
                 if (condition === 'FALSE') return false;
                 
-                // Handle simple comparisons
+                // Handle simple comparisons with proper parentheses handling
                 const operators = ['>=', '<=', '>', '<', '='];
                 for (const op of operators) {
-                    if (condition.includes(op)) {
-                        const parts = condition.split(op);
-                        if (parts.length === 2) {
-                            const leftVal = this.evaluateExpression(parts[0].trim());
-                            const rightVal = this.evaluateExpression(parts[1].trim());
-                            
-                            switch (op) {
-                                case '>=': return leftVal >= rightVal;
-                                case '<=': return leftVal <= rightVal;
-                                case '>': return leftVal > rightVal;
-                                case '<': return leftVal < rightVal;
-                                case '=': return leftVal == rightVal;
-                            }
+                    const opIndex = this.findOperatorIndex(condition, op);
+                    if (opIndex !== -1) {
+                        const leftPart = condition.substring(0, opIndex).trim();
+                        const rightPart = condition.substring(opIndex + op.length).trim();
+
+                        const leftVal = this.evaluateExpression(leftPart);
+                        const rightVal = this.evaluateExpression(rightPart);
+
+                        switch (op) {
+                            case '>=': return leftVal >= rightVal;
+                            case '<=': return leftVal <= rightVal;
+                            case '>': return leftVal > rightVal;
+                            case '<': return leftVal < rightVal;
+                            case '=': return leftVal == rightVal;
                         }
                     }
                 }
                 return false;
+            }
+
+            findOperatorIndex(condition, operator) {
+                let parenCount = 0;
+                let i = 0;
+
+                while (i <= condition.length - operator.length) {
+                    const char = condition[i];
+
+                    if (char === '(') {
+                        parenCount++;
+                    } else if (char === ')') {
+                        parenCount--;
+                    } else if (parenCount === 0) {
+                        // Only check for operators when we're not inside parentheses
+                        if (condition.substring(i, i + operator.length) === operator) {
+                            // Make sure this isn't part of a longer operator
+                            const prevChar = i > 0 ? condition[i - 1] : ' ';
+                            const nextChar = i + operator.length < condition.length ? condition[i + operator.length] : ' ';
+
+                            // For >= and <= we need to make sure we don't match > or < that are part of them
+                            if (operator === '>' && nextChar === '=') {
+                                i++;
+                                continue;
+                            }
+                            if (operator === '<' && nextChar === '=') {
+                                i++;
+                                continue;
+                            }
+
+                            return i;
+                        }
+                    }
+                    i++;
+                }
+                return -1;
+            }
+
+            evaluateFunctionCallSync(functionCall) {
+                // Parse the function call
+                const match = functionCall.match(/^(\w+)\s*\(([^)]*)\)$/);
+                if (!match) return null;
+
+                const funcName = match[1];
+                const argsStr = match[2];
+
+                // Check if function exists
+                if (!this.executionContext.functions || !this.executionContext.functions[funcName]) {
+                    return null;
+                }
+
+                const func = this.executionContext.functions[funcName];
+
+                // Parse arguments
+                const args = argsStr.trim() ? argsStr.split(',').map(arg => this.evaluateExpression(arg.trim())) : [];
+
+                // Check parameter count
+                if (args.length !== func.params.length) {
+                    throw new Error(`Function '${funcName}' expects ${func.params.length} arguments, got ${args.length}`);
+                }
+
+                // Save current state
+                const savedVariables = JSON.parse(JSON.stringify(this.variables));
+                const savedInFunction = this.executionContext.inFunction;
+
+                try {
+                    // Set up function parameters as local variables
+                    this.variables = {};
+                    for (let i = 0; i < func.params.length; i++) {
+                        this.variables[func.params[i]] = args[i];
+                    }
+                    this.executionContext.inFunction = true;
+
+                    // Execute function body synchronously
+                    let i = func.startLine + 1;
+                    while (i < func.endLine) {
+                        const line = this.parsedCode[i].trim();
+                        console.log(`Sync executing: ${line}`); // Debug
+
+                        if (line.startsWith('RETURN ')) {
+                            const returnExpr = line.substring(7).trim();
+                            const returnValue = this.evaluateExpression(returnExpr);
+                            console.log(`Sync return: ${returnValue}`); // Debug
+                            return returnValue;
+                        } else if (line === 'RETURN') {
+                            console.log(`Sync return: undefined`); // Debug
+                            return undefined;
+                        } else if (line.startsWith('IF ')) {
+                            const thenIndex = line.indexOf('THEN');
+                            if (thenIndex > 0) {
+                                const condition = line.substring(3, thenIndex).trim();
+                                const conditionResult = this.evaluateCondition(condition);
+                                console.log(`Sync IF condition "${condition}" = ${conditionResult}`); // Debug
+
+                                if (!conditionResult) {
+                                    // Skip to END IF or ELSE
+                                    let depth = 1;
+                                    i++;
+                                    while (i < func.endLine && depth > 0) {
+                                        const nextLine = this.parsedCode[i].trim();
+                                        if (nextLine.startsWith('IF ')) depth++;
+                                        else if (nextLine === 'END IF') depth--;
+                                        else if (nextLine === 'ELSE' && depth === 1) break;
+                                        i++;
+                                    }
+                                    continue;
+                                }
+                            }
+                        } else if (line === 'ELSE') {
+                            // Skip to END IF
+                            let depth = 1;
+                            i++;
+                            while (i < func.endLine && depth > 0) {
+                                const nextLine = this.parsedCode[i].trim();
+                                if (nextLine.startsWith('IF ')) depth++;
+                                else if (nextLine === 'END IF') depth--;
+                                i++;
+                            }
+                            continue;
+                        } else if (line === 'END IF') {
+                            // Continue normal execution
+                        } else if (line.includes('←')) {
+                            // Handle assignments within the function
+                            const parts = line.split('←');
+                            if (parts.length === 2) {
+                                const varName = parts[0].trim();
+                                const value = this.evaluateExpression(parts[1].trim());
+                                this.updateVariable(varName, value);
+                                console.log(`Sync assignment: ${varName} = ${value}`); // Debug
+                            }
+                        }
+                        i++;
+                    }
+                    return undefined;
+                } finally {
+                    // Restore state
+                    this.variables = savedVariables;
+                    this.executionContext.inFunction = savedInFunction;
+                }
+            }
+
+            preprocessConditionWithFunctionCalls(condition) {
+                // Find function calls in the condition and replace them with temporary variables
+                let processedCondition = condition;
+                const tempVarCounter = this.tempVarCounter || 0;
+
+                // Find function calls: word followed by parentheses
+                const functionCallRegex = /(\w+)\s*\([^)]*\)/g;
+                let match;
+                let replacements = [];
+
+                while ((match = functionCallRegex.exec(condition)) !== null) {
+                    const functionCall = match[0];
+                    const functionName = match[1];
+
+                    // Check if this is actually a function we know about
+                    if (this.executionContext.functions && this.executionContext.functions[functionName]) {
+                        const tempVarName = `_temp${tempVarCounter + replacements.length}`;
+                        replacements.push({
+                            original: functionCall,
+                            tempVar: tempVarName,
+                            expression: functionCall
+                        });
+                    }
+                }
+
+                // Apply replacements and evaluate function calls
+                for (const replacement of replacements) {
+                    try {
+                        const value = this.evaluateFunctionCallSync(replacement.expression);
+                        if (value !== null) {
+                            this.updateVariable(replacement.tempVar, value);
+                            processedCondition = processedCondition.replace(replacement.original, replacement.tempVar);
+                            console.log(`Created temp variable: ${replacement.tempVar} = ${value} (from ${replacement.original})`); // Debug
+                        }
+                    } catch (error) {
+                        console.log(`Error evaluating function call ${replacement.original}:`, error);
+                    }
+                }
+
+                this.tempVarCounter = tempVarCounter + replacements.length;
+                return processedCondition;
             }
 
             highlightLine(lineIndex) {
@@ -1491,21 +1739,34 @@ Click line numbers to set breakpoints!"></textarea>
 
                 const containerRect = codeContainer.getBoundingClientRect();
                 const lineRect = lineElement.getBoundingClientRect();
+                const containerScrollTop = codeContainer.scrollTop;
+                const lineOffsetTop = lineElement.offsetTop;
+                const containerHeight = codeContainer.clientHeight;
+                const lineHeight = lineElement.offsetHeight;
 
                 // Check if line is above the visible area
                 if (lineRect.top < containerRect.top) {
-                    // Scroll up to show the line with some padding
-                    lineElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    // Scroll up to show the line with some padding (20px)
+                    codeContainer.scrollTo({
+                        top: lineOffsetTop - 20,
+                        behavior: 'smooth'
+                    });
                 }
                 // Check if line is below the visible area
                 else if (lineRect.bottom > containerRect.bottom) {
-                    // Scroll down to show the line with some padding
-                    lineElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                    // Scroll down to show the line with some padding (20px)
+                    codeContainer.scrollTo({
+                        top: lineOffsetTop - containerHeight + lineHeight + 20,
+                        behavior: 'smooth'
+                    });
                 }
                 // If line is partially visible or needs centering for better visibility
                 else if (lineRect.top < containerRect.top + 50 || lineRect.bottom > containerRect.bottom - 50) {
                     // Center the line in the view for better visibility
-                    lineElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    codeContainer.scrollTo({
+                        top: lineOffsetTop - (containerHeight / 2) + (lineHeight / 2),
+                        behavior: 'smooth'
+                    });
                 }
             }
 
@@ -1556,6 +1817,7 @@ Click line numbers to set breakpoints!"></textarea>
                     inFunction: false,
                     pendingReturn: null
                 };
+                this.tempVarCounter = 0;
                 this.executionHistory = [];
                 this.initializeVariables();
                 this.updateButtons();
@@ -1736,7 +1998,9 @@ Click line numbers to set breakpoints!"></textarea>
                 } else if (nextLine === 'END WHILE') {
                     const loop = this.executionContext.loopStacks[this.executionContext.loopStacks.length - 1];
                     if (loop && loop.type === 'WHILE') {
-                        const result = this.evaluateCondition(loop.condition);
+                        // Re-evaluate the condition with fresh function calls
+                        const processedCondition = this.preprocessConditionWithFunctionCalls(loop.condition);
+                        const result = this.evaluateCondition(processedCondition);
                         if (result) {
                             // Continue loop: jump back to WHILE line
                             this.currentStep = loop.startLine - 1; // -1 because nextStep() will increment
@@ -1749,6 +2013,7 @@ Click line numbers to set breakpoints!"></textarea>
             executeStep(line) {
                 try {
                     const trimmedLine = line.trim();
+                    console.log(`[Step ${this.currentStep}] Executing: "${trimmedLine}"`); // Debug
 
                     // Handle main program structure
                     if (trimmedLine === 'BEGIN') {
@@ -1807,7 +2072,9 @@ Click line numbers to set breakpoints!"></textarea>
                         const thenIndex = trimmedLine.indexOf('THEN');
                         if (thenIndex > 0) {
                             const condition = trimmedLine.substring(3, thenIndex).trim();
+                            console.log(`IF statement: evaluating condition "${condition}"`); // Debug
                             const result = this.evaluateCondition(condition);
+                            console.log(`IF condition result: ${result}`); // Debug
 
                             this.executionContext.ifStack.push({
                                 startLine: this.currentStep,
@@ -1816,7 +2083,13 @@ Click line numbers to set breakpoints!"></textarea>
                             });
 
                             if (!result) {
+                                console.log(`IF condition false, skipping to next IF block`); // Debug
                                 this.skipToNextIfBlock();
+                                console.log(`After skipToNextIfBlock, currentStep is now: ${this.currentStep}`); // Debug
+                                // Reset waiting flag so execution can continue
+                                this.executionContext.waitingForExecution = false;
+                            } else {
+                                console.log(`IF condition true, continuing execution`); // Debug
                             }
                         }
                     } else if (trimmedLine.startsWith('ELSE IF ')) {
@@ -1832,6 +2105,7 @@ Click line numbers to set breakpoints!"></textarea>
                                     currentIf.conditionMet = true;
                                 } else {
                                     this.skipToNextIfBlock();
+                                    this.executionContext.waitingForExecution = false;
                                 }
                             }
                         } else {
@@ -1840,20 +2114,32 @@ Click line numbers to set breakpoints!"></textarea>
                     } else if (trimmedLine === 'ELSE') {
                         const currentIf = this.executionContext.ifStack[this.executionContext.ifStack.length - 1];
                         if (currentIf && currentIf.hasExecuted) {
+                            // IF block was executed, skip ELSE
+                            console.log(`ELSE: IF block was executed, skipping ELSE`); // Debug
                             this.skipToEndIf();
+                            this.executionContext.waitingForExecution = false;
+                        } else if (currentIf) {
+                            // IF block was not executed, now execute ELSE
+                            console.log(`ELSE: IF block was not executed, executing ELSE`); // Debug
+                            currentIf.hasExecuted = true;
+                            currentIf.conditionMet = true;
                         }
                     } else if (trimmedLine === 'END IF') {
                         this.executionContext.ifStack.pop();
                     } else if (trimmedLine.startsWith('WHILE ')) {
                         const doIndex = trimmedLine.indexOf('DO');
                         if (doIndex > 0) {
-                            const condition = trimmedLine.substring(6, doIndex).trim();
-                            const result = this.evaluateCondition(condition);
+                            const originalCondition = trimmedLine.substring(6, doIndex).trim();
+                            const processedCondition = this.preprocessConditionWithFunctionCalls(originalCondition);
+                            console.log(`WHILE condition: "${originalCondition}" → "${processedCondition}"`); // Debug
+                            const result = this.evaluateCondition(processedCondition);
+                            console.log(`WHILE result: ${result}`); // Debug
                             if (result) {
                                 this.executionContext.loopStacks.push({
                                     type: 'WHILE',
                                     startLine: this.currentStep,
-                                    condition: condition
+                                    condition: originalCondition, // Store original for re-evaluation
+                                    processedCondition: processedCondition
                                 });
                             } else {
                                 this.skipToEnd('WHILE');
@@ -1870,9 +2156,14 @@ Click line numbers to set breakpoints!"></textarea>
                         const match = trimmedLine.match(/FOR (\w+) ← (.+) TO (.+?)(?:\s+STEP\s+(.+?))?\s+DO/);
                         if (match) {
                             const varName = match[1];
-                            const startVal = this.evaluateExpression(match[2]);
-                            const endVal = this.evaluateExpression(match[3]);
-                            const stepVal = match[4] ? this.evaluateExpression(match[4]) : 1;
+                            // Preprocess expressions that might contain function calls
+                            const startExpr = this.preprocessConditionWithFunctionCalls(match[2]);
+                            const endExpr = this.preprocessConditionWithFunctionCalls(match[3]);
+                            const stepExpr = match[4] ? this.preprocessConditionWithFunctionCalls(match[4]) : '1';
+
+                            const startVal = this.evaluateExpression(startExpr);
+                            const endVal = this.evaluateExpression(endExpr);
+                            const stepVal = this.evaluateExpression(stepExpr);
 
                             // Only set the variable to startVal on the first execution (when loop is not yet in stack)
                             if (!this.executionContext.loopStacks.find(loop => loop.type === 'FOR' && loop.varName === varName)) {
@@ -1965,8 +2256,8 @@ Click line numbers to set breakpoints!"></textarea>
                 let depth = 0;
                 while (this.currentStep + 1 < this.parsedCode.length) {
                     this.currentStep++;
-                    const line = this.parsedCode[this.currentStep];
-                    
+                    const line = this.parsedCode[this.currentStep].trim();
+
                     if (line.startsWith('IF ')) {
                         depth++;
                     } else if (line === 'END IF') {
@@ -1983,21 +2274,27 @@ Click line numbers to set breakpoints!"></textarea>
             }
 
             skipToEndIf() {
+                console.log(`skipToEndIf: Starting from line ${this.currentStep}: "${this.parsedCode[this.currentStep]}"`); // Debug
                 let depth = 0;
                 while (this.currentStep + 1 < this.parsedCode.length) {
                     this.currentStep++;
-                    const line = this.parsedCode[this.currentStep];
-                    
+                    const line = this.parsedCode[this.currentStep].trim();
+                    console.log(`skipToEndIf: Checking line ${this.currentStep}: "${line}" (depth: ${depth})`); // Debug
+
                     if (line.startsWith('IF ')) {
                         depth++;
+                        console.log(`skipToEndIf: Found nested IF, depth now ${depth}`); // Debug
                     } else if (line === 'END IF') {
                         if (depth === 0) {
+                            console.log(`skipToEndIf: Found matching END IF, stopping at line ${this.currentStep}`); // Debug
                             this.currentStep--;
                             return;
                         }
                         depth--;
+                        console.log(`skipToEndIf: Found nested END IF, depth now ${depth}`); // Debug
                     }
                 }
+                console.log(`skipToEndIf: Reached end of code without finding END IF`); // Debug
             }
 
             skipToEnd(blockType) {
