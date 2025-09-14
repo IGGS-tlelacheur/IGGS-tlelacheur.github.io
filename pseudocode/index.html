@@ -1312,6 +1312,7 @@ Click line numbers to set breakpoints!"></textarea>
                     loopStacks: [],
                     ifStack: [],
                     breakpointPaused: false,
+                    waitingForExecution: false,
                     functions: this.parseFunctions()
                 };
                 this.executionHistory = [];
@@ -1381,7 +1382,7 @@ Click line numbers to set breakpoints!"></textarea>
                 this.autoRunning = false;
                 this.currentStep = -1;
                 this.stepCounter = 0;
-                this.executionContext = { loopStacks: [], ifStack: [], breakpointPaused: false };
+                this.executionContext = { loopStacks: [], ifStack: [], breakpointPaused: false, waitingForExecution: false };
                 this.executionHistory = [];
                 this.initializeVariables();
                 this.updateButtons();
@@ -1418,43 +1419,50 @@ Click line numbers to set breakpoints!"></textarea>
             nextStep() {
                 if (!this.isRunning) return;
 
-                this.currentStep++;
-                
-                if (this.currentStep >= this.parsedCode.length) {
-                    this.isRunning = false;
-                    this.autoRunning = false;
-                    this.updateButtons();
-                    this.updateDebugInfo();
-                    return;
-                }
+                // If this is the first step or we just executed a line, move to next line
+                if (!this.executionContext.waitingForExecution) {
+                    this.currentStep++;
 
-                // Check for breakpoint BEFORE executing
-                if (this.breakpoints.has(this.currentStep) && !this.executionContext.breakpointPaused) {
-                    this.executionContext.breakpointPaused = true;
-                    this.highlightLine(this.currentStep);
-                    
-                    if (this.autoRunning) {
+                    if (this.currentStep >= this.parsedCode.length) {
+                        this.isRunning = false;
                         this.autoRunning = false;
+                        this.updateButtons();
+                        this.updateDebugInfo();
+                        return;
                     }
-                    
+
+                    // Highlight the line and wait for execution
+                    this.highlightLine(this.currentStep);
+                    this.executionContext.waitingForExecution = true;
+
+                    // Check for breakpoint - pause auto-run if we hit one
+                    if (this.breakpoints.has(this.currentStep)) {
+                        if (this.autoRunning) {
+                            this.autoRunning = false;
+                        }
+                        this.executionContext.breakpointPaused = true;
+                    } else {
+                        this.executionContext.breakpointPaused = false;
+                    }
+
                     this.updateButtons();
                     this.updateDebugInfo();
                     return;
                 }
 
-                this.executionContext.breakpointPaused = false;
-
+                // Execute the currently highlighted line
                 this.saveExecutionState();
                 this.stepCounter++;
 
-                this.highlightLine(this.currentStep);
                 this.executeStep(this.parsedCode[this.currentStep]);
 
                 // Check if next line is END FOR/END WHILE and we need to continue loop
                 this.checkLoopContinuation();
 
-                this.updateButtons();
-                this.updateDebugInfo();
+                this.executionContext.waitingForExecution = false;
+
+                // Now move to next line (recursive call)
+                this.nextStep();
             }
 
             checkLoopContinuation() {
@@ -1712,6 +1720,8 @@ Click line numbers to set breakpoints!"></textarea>
                         status = 'Auto Running';
                     } else if (this.breakpoints.has(this.currentStep)) {
                         status = 'Paused at Breakpoint';
+                    } else if (this.executionContext.waitingForExecution) {
+                        status = 'Ready to Execute';
                     } else {
                         status = 'Running (Manual)';
                     }
