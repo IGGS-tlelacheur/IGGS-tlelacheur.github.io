@@ -624,6 +624,7 @@ Click line numbers to set breakpoints!"></textarea>
                         <option value="squares">Square Numbers</option>
                         <option value="logical">Logical Operators (AND/OR)</option>
                         <option value="functions">Functions</option>
+                        <option value="methods">Methods</option>
                     </select>
                 </div>
                 
@@ -732,6 +733,15 @@ Click line numbers to set breakpoints!"></textarea>
             }
         }
 
+        // Special exception for method calls that need step-through execution
+        class MethodCallException extends Error {
+            constructor(methodName) {
+                super(`Method call: ${methodName}`);
+                this.name = 'MethodCallException';
+                this.methodName = methodName;
+            }
+        }
+
         class MathematicalPseudocodeAnimator {
             constructor() {
                 this.currentStep = -1;
@@ -753,7 +763,8 @@ Click line numbers to set breakpoints!"></textarea>
                     loop: 'BEGIN\n    count ← 0\n    total ← 0\n    WHILE count < 5 DO\n        total ← total + count\n        count ← count + 1\n    END WHILE\n    PRINT "Total: " + total\nEND',
                     factorial: 'BEGIN\n    n ← 5\n    factorial ← 1\n    i ← 1\n    WHILE i <= n DO\n        factorial ← factorial * i\n        i ← i + 1\n    END WHILE\n    PRINT "Factorial of " + n + " is " + factorial\nEND',
                     logical: 'BEGIN\n    x ← 7\n    y ← 3\n    z ← 0\n    \n    IF x > 5 AND y < 10 THEN\n        PRINT "Both conditions met"\n    END IF\n    \n    IF x < 5 OR y < 5 THEN\n        PRINT "At least one is less than 5"\n    END IF\n    \n    IF (x > 0 AND y > 0) OR z = 0 THEN\n        PRINT "Complex condition is true"\n    END IF\nEND',
-                    functions: 'FUNCTION square(x)\n    result ← x * x\n    RETURN result\nEND FUNCTION\n\nFUNCTION add(a, b)\n    RETURN a + b\nEND FUNCTION\n\nBEGIN\n    num ← 5\n    sq ← square(num)\n    doubled ← add(sq, sq)\n    PRINT "Square of " + num + " is " + sq\n    PRINT "Double the square is " + doubled\nEND'
+                    functions: 'FUNCTION square(x)\n    result ← x * x\n    RETURN result\nEND FUNCTION\n\nFUNCTION add(a, b)\n    RETURN a + b\nEND FUNCTION\n\nBEGIN\n    num ← 5\n    sq ← square(num)\n    doubled ← add(sq, sq)\n    PRINT "Square of " + num + " is " + sq\n    PRINT "Double the square is " + doubled\nEND',
+                    methods: 'METHOD printGreeting(name)\n    PRINT "Hello, " + name + "!"\nEND METHOD\n\nMETHOD showInfo(value, label)\n    PRINT label + ": " + value\nEND METHOD\n\nBEGIN\n    username ← "Alice"\n    age ← 25\n    printGreeting(username)\n    showInfo(age, "Age")\n    showInfo(username, "Name")\nEND'
                 };
                 
                 this.initializeEventListeners();
@@ -1240,6 +1251,45 @@ Click line numbers to set breakpoints!"></textarea>
                 throw new FunctionCallException(funcName);
             }
 
+            callMethod(methodName, fullLine) {
+                // Check if method exists
+                if (!this.executionContext.functions || !this.executionContext.functions[methodName]) {
+                    throw new Error(`Method '${methodName}' is not defined`);
+                }
+
+                const method = this.executionContext.functions[methodName];
+
+                // Ensure it's actually a method
+                if (method.type !== 'METHOD') {
+                    throw new Error(`'${methodName}' is not a method`);
+                }
+
+                // Parse arguments from the full line
+                const argsMatch = fullLine.match(/\(([^)]*)\)/);
+                const argsStr = argsMatch ? argsMatch[1] : '';
+                const args = argsStr.trim() ? argsStr.split(',').map(arg => this.evaluateExpression(arg.trim())) : [];
+
+                // Check parameter count
+                if (args.length !== method.params.length) {
+                    throw new Error(`Method '${methodName}' expects ${method.params.length} arguments, got ${args.length}`);
+                }
+
+                // Check if we're returning from this method call
+                if (this.executionContext.pendingReturn &&
+                    this.executionContext.pendingReturn.functionName === methodName) {
+                    // Method execution completed, clear pending return and continue
+                    this.executionContext.pendingReturn = null;
+                    console.log(`Method ${methodName} completed`); // Debug
+                    return;
+                }
+
+                // Initiate the method call for step-by-step execution
+                this.initiateMethodCall(methodName, args, method);
+
+                // Throw a special exception to pause execution and jump to method
+                throw new MethodCallException(methodName);
+            }
+
             initiateFunctionCall(funcName, args, func) {
                 // Save current execution state to call stack
                 const callFrame = {
@@ -1262,6 +1312,34 @@ Click line numbers to set breakpoints!"></textarea>
                 this.currentStep = func.startLine;
                 this.executionContext.waitingForExecution = true;
                 this.executionContext.inFunction = true;
+
+                // Render variables to show the new local scope
+                this.renderVariables();
+            }
+
+            initiateMethodCall(methodName, args, method) {
+                // Save current execution state to call stack
+                const callFrame = {
+                    functionName: methodName, // Use same property name for consistency
+                    returnLine: this.currentStep,
+                    returnVariables: JSON.parse(JSON.stringify(this.variables)),
+                    waitingForExecution: this.executionContext.waitingForExecution,
+                    returnValue: undefined,
+                    isMethod: true // Flag to distinguish from function calls
+                };
+
+                this.executionContext.callStack.push(callFrame);
+
+                // Set up method parameters as local variables (clear all globals)
+                this.variables = {};
+                for (let i = 0; i < method.params.length; i++) {
+                    this.variables[method.params[i]] = args[i];
+                }
+
+                // Jump to method start (skip the METHOD declaration line)
+                this.currentStep = method.startLine;
+                this.executionContext.waitingForExecution = true;
+                this.executionContext.inFunction = true; // Reuse the same flag
 
                 // Render variables to show the new local scope
                 this.renderVariables();
@@ -1676,7 +1754,19 @@ Click line numbers to set breakpoints!"></textarea>
                         this.skipToEnd(trimmedLine.startsWith('FUNCTION') ? 'FUNCTION' : 'METHOD');
                         return;
                     } else if (trimmedLine.match(/^END (FUNCTION|METHOD)$/)) {
-                        // This should only be reached when skipping function definitions
+                        const endType = trimmedLine.split(' ')[1];
+                        if (this.executionContext.inFunction && this.executionContext.callStack.length > 0) {
+                            // We're at the end of a function or method execution
+                            const callFrame = this.executionContext.callStack[this.executionContext.callStack.length - 1];
+                            if (endType === 'METHOD' || (callFrame && callFrame.isMethod)) {
+                                // Methods don't need explicit RETURN - auto return at END METHOD
+                                this.returnFromFunction(undefined);
+                            } else {
+                                // Functions must have explicit RETURN statements
+                                throw new Error(`Function must have explicit RETURN statement`);
+                            }
+                        }
+                        // When not in a function/method, this is reached when skipping definitions
                         return;
                     }
                     // Handle variable assignments
@@ -1816,9 +1906,25 @@ Click line numbers to set breakpoints!"></textarea>
                             this.isRunning = false;
                         }
                     }
+                    // Handle standalone method calls (not assignments or prints)
+                    else {
+                        const methodCallMatch = trimmedLine.match(/^(\w+)\s*\(/);
+                        if (methodCallMatch) {
+                            const methodName = methodCallMatch[1];
+                            if (this.executionContext.functions[methodName] &&
+                                this.executionContext.functions[methodName].type === 'METHOD') {
+                                // This is a standalone method call
+                                this.callMethod(methodName, trimmedLine);
+                            }
+                        }
+                    }
                 } catch (error) {
                     if (error instanceof FunctionCallException) {
                         // Function call initiated - execution will continue from function
+                        // Don't treat this as an error
+                        return;
+                    } else if (error instanceof MethodCallException) {
+                        // Method call initiated - execution will continue from method
                         // Don't treat this as an error
                         return;
                     }
