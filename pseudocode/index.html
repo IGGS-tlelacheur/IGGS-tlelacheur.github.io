@@ -16,6 +16,8 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
+            margin: 0;
+            box-sizing: border-box;
         }
 
         .container {
@@ -24,7 +26,7 @@
             background: white;
             border-radius: 15px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            overflow: hidden;
+            overflow: visible;
         }
 
         .header {
@@ -109,10 +111,11 @@
 
         .content {
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-columns: 2fr 2fr 1fr;
             gap: 20px;
             padding: 20px;
             min-height: 600px;
+            box-sizing: border-box;
         }
 
         .input-panel, .pseudocode-panel, .variables-panel {
@@ -577,17 +580,22 @@
                 <div class="panel-title">Write Your Pseudocode</div>
                 <textarea id="codeInput" class="code-input" placeholder="Enter your pseudocode here...
 
-Example:
-x ← 5
-y ← 10
-sum ← x + y
-square ← x ^ 2
-OUTPUT sum
-OUTPUT square
+Example with new structure:
+BEGIN
+    x ← 5
+    y ← 10
+    sum ← x + y
+    square ← x ^ 2
+    OUTPUT sum
+    OUTPUT square
+END
 
 Supported commands:
+• BEGIN ... END (main program)
+• FUNCTION name ... END FUNCTION
+• METHOD name ... END METHOD
 • variable ← value
-• PRINT variable/value  
+• PRINT variable/value
 • OUTPUT variable/value
 • IF condition THEN ... END IF
 • WHILE condition DO ... END WHILE
@@ -609,6 +617,7 @@ Click line numbers to set breakpoints!"></textarea>
                     <button class="example-btn" data-example="factorial">Factorial</button>
                     <button class="example-btn" data-example="squares">Square Numbers</button>
                     <button class="example-btn" data-example="logical">Logical Operators (AND/OR)</button>
+                    <button class="example-btn" data-example="functions">Functions & Methods</button>
                 </div>
                 
                 <div class="help-text">
@@ -722,12 +731,13 @@ Click line numbers to set breakpoints!"></textarea>
                 this.stepCounter = 0;
                 
                 this.examples = {
-                    simple: 'x ← 5\ny ← 10\nsum ← x + y\nPRINT "Sum: " + sum',
-                    power: 'base ← 3\nexponent ← 4\nresult ← base ^ exponent\nPRINT base + " to the power of " + exponent + " = " + result',
-                    squares: 'FOR i ← 1 TO 5 DO\n    square ← i ^ 2\n    PRINT "Square of " + i + " is " + square\nEND FOR',
-                    loop: 'count ← 0\ntotal ← 0\nWHILE count < 5 DO\n    total ← total + count\n    count ← count + 1\nEND WHILE\nPRINT "Total: " + total',
-                    factorial: 'n ← 5\nfactorial ← 1\ni ← 1\nWHILE i <= n DO\n    factorial ← factorial * i\n    i ← i + 1\nEND WHILE\nPRINT "Factorial of " + n + " is " + factorial',
-                    logical: 'x ← 7\ny ← 3\nz ← 0\n\nIF x > 5 AND y < 10 THEN\n    PRINT "Both conditions met"\nEND IF\n\nIF x < 5 OR y < 5 THEN\n    PRINT "At least one is less than 5"\nEND IF\n\nIF (x > 0 AND y > 0) OR z = 0 THEN\n    PRINT "Complex condition is true"\nEND IF'
+                    simple: 'BEGIN\n    x ← 5\n    y ← 10\n    sum ← x + y\n    PRINT "Sum: " + sum\nEND',
+                    power: 'BEGIN\n    base ← 3\n    exponent ← 4\n    result ← base ^ exponent\n    PRINT base + " to the power of " + exponent + " = " + result\nEND',
+                    squares: 'BEGIN\n    FOR i ← 1 TO 5 DO\n        square ← i ^ 2\n        PRINT "Square of " + i + " is " + square\n    END FOR\nEND',
+                    loop: 'BEGIN\n    count ← 0\n    total ← 0\n    WHILE count < 5 DO\n        total ← total + count\n        count ← count + 1\n    END WHILE\n    PRINT "Total: " + total\nEND',
+                    factorial: 'BEGIN\n    n ← 5\n    factorial ← 1\n    i ← 1\n    WHILE i <= n DO\n        factorial ← factorial * i\n        i ← i + 1\n    END WHILE\n    PRINT "Factorial of " + n + " is " + factorial\nEND',
+                    logical: 'BEGIN\n    x ← 7\n    y ← 3\n    z ← 0\n    \n    IF x > 5 AND y < 10 THEN\n        PRINT "Both conditions met"\n    END IF\n    \n    IF x < 5 OR y < 5 THEN\n        PRINT "At least one is less than 5"\n    END IF\n    \n    IF (x > 0 AND y > 0) OR z = 0 THEN\n        PRINT "Complex condition is true"\n    END IF\nEND',
+                    functions: 'FUNCTION square(x)\n    result ← x * x\n    RETURN result\nEND FUNCTION\n\nFUNCTION factorial(n)\n    IF n <= 1 THEN\n        RETURN 1\n    END IF\n    RETURN n * factorial(n - 1)\nEND FUNCTION\n\nBEGIN\n    num ← 5\n    sq ← square(num)\n    fact ← factorial(num)\n    PRINT "Square of " + num + " is " + sq\n    PRINT "Factorial of " + num + " is " + fact\nEND'
                 };
                 
                 this.initializeEventListeners();
@@ -783,13 +793,13 @@ Click line numbers to set breakpoints!"></textarea>
                 rawInput = rawInput.replace(/\^/g, '**');
                 
                 const lines = rawInput.split('\n')
-                    .map(line => line.trim())
-                    .filter(line => line.length > 0)
+                    .map(line => line.trimEnd()) // Only trim trailing whitespace, preserve indentation
+                    .filter(line => line.trim().length > 0) // Filter out completely empty lines
                     .map(line => {
                         line = line.replace(/<-/g, '←');
                         // Normalize spacing around ← operator: ensure single space on both sides
                         line = line.replace(/\s*←\s*/g, ' ← ');
-                        line = line.replace(/\b(if|then|else|elseif|end|while|do|for|to|output|print|input|and|or)\b/gi,
+                        line = line.replace(/\b(if|then|else|elseif|end|while|do|for|to|output|print|input|and|or|begin|function|method|return|call)\b/gi,
                             match => match.toUpperCase());
                         return line;
                     });
@@ -826,36 +836,88 @@ Click line numbers to set breakpoints!"></textarea>
             validateCode(lines) {
                 const errors = [];
                 const blockStack = [];
+                let hasBegin = false;
+                let hasEnd = false;
+                let inMainCode = false;
+                let functionCount = 0;
 
                 for (let i = 0; i < lines.length; i++) {
                     const line = lines[i];
+                    const trimmedLine = line.trim(); // Use trimmed version for validation
                     const lineNum = i + 1;
 
-                    if (line.includes('←') && !line.startsWith('IF ') && !line.startsWith('ELSE IF ') && 
-                        !line.startsWith('WHILE ') && !line.startsWith('FOR ') && 
-                        !line.startsWith('OUTPUT ') && !line.startsWith('PRINT ')) {
-                        const parts = line.split('←');
-                        if (parts.length !== 2 || parts[0].trim() === '' || parts[1].trim() === '') {
-                            errors.push(`Line ${lineNum}: Invalid assignment format`);
+                    // Check for main code structure
+                    if (trimmedLine === 'BEGIN') {
+                        if (hasBegin) {
+                            errors.push(`Line ${lineNum}: Multiple BEGIN statements not allowed`);
                         }
-                    } else if (line.startsWith('IF ')) {
-                        if (!line.includes('THEN')) errors.push(`Line ${lineNum}: IF must end with THEN`);
-                        blockStack.push('IF');
-                    } else if (line.startsWith('WHILE ')) {
-                        if (!line.includes('DO')) errors.push(`Line ${lineNum}: WHILE must end with DO`);
-                        blockStack.push('WHILE');
-                    } else if (line.startsWith('FOR ')) {
-                        if (!line.includes('←') || !line.includes('TO') || !line.includes('DO')) {
-                            errors.push(`Line ${lineNum}: FOR must be 'FOR var ← start TO end DO'`);
-                        }
-                        blockStack.push('FOR');
-                    } else if (line.match(/^END (IF|WHILE|FOR)$/)) {
-                        if (blockStack.length === 0) {
-                            errors.push(`Line ${lineNum}: Unexpected END statement`);
+                        hasBegin = true;
+                        inMainCode = true;
+                        blockStack.push('BEGIN');
+                    } else if (trimmedLine === 'END') {
+                        if (!hasBegin) {
+                            errors.push(`Line ${lineNum}: END without BEGIN`);
+                        } else if (blockStack[blockStack.length - 1] !== 'BEGIN') {
+                            errors.push(`Line ${lineNum}: END must close BEGIN, not ${blockStack[blockStack.length - 1]}`);
                         } else {
+                            hasEnd = true;
+                            inMainCode = false;
                             blockStack.pop();
                         }
                     }
+                    // Check for function/method definitions
+                    else if (trimmedLine.startsWith('FUNCTION ') || trimmedLine.startsWith('METHOD ')) {
+                        if (inMainCode) {
+                            errors.push(`Line ${lineNum}: Functions/methods must be defined outside the main BEGIN/END block`);
+                        }
+                        const match = trimmedLine.match(/^(FUNCTION|METHOD)\s+(\w+)\s*(\([^)]*\))?\s*$/);
+                        if (!match) {
+                            errors.push(`Line ${lineNum}: Invalid function/method syntax. Use 'FUNCTION name' or 'FUNCTION name(params)'`);
+                        }
+                        blockStack.push(trimmedLine.startsWith('FUNCTION') ? 'FUNCTION' : 'METHOD');
+                        functionCount++;
+                    }
+                    // Check for existing block structures
+                    else if (trimmedLine.includes('←') && !trimmedLine.startsWith('IF ') && !trimmedLine.startsWith('ELSE IF ') &&
+                        !trimmedLine.startsWith('WHILE ') && !trimmedLine.startsWith('FOR ') &&
+                        !trimmedLine.startsWith('OUTPUT ') && !trimmedLine.startsWith('PRINT ') &&
+                        !trimmedLine.startsWith('FUNCTION ') && !trimmedLine.startsWith('METHOD ')) {
+                        const parts = trimmedLine.split('←');
+                        if (parts.length !== 2 || parts[0].trim() === '' || parts[1].trim() === '') {
+                            errors.push(`Line ${lineNum}: Invalid assignment format`);
+                        }
+                    } else if (trimmedLine.startsWith('IF ')) {
+                        if (!trimmedLine.includes('THEN')) errors.push(`Line ${lineNum}: IF must end with THEN`);
+                        blockStack.push('IF');
+                    } else if (trimmedLine.startsWith('WHILE ')) {
+                        if (!trimmedLine.includes('DO')) errors.push(`Line ${lineNum}: WHILE must end with DO`);
+                        blockStack.push('WHILE');
+                    } else if (trimmedLine.startsWith('FOR ')) {
+                        if (!trimmedLine.includes('←') || !trimmedLine.includes('TO') || !trimmedLine.includes('DO')) {
+                            errors.push(`Line ${lineNum}: FOR must be 'FOR var ← start TO end DO'`);
+                        }
+                        blockStack.push('FOR');
+                    } else if (trimmedLine.match(/^END (IF|WHILE|FOR|FUNCTION|METHOD)$/)) {
+                        const endType = trimmedLine.split(' ')[1];
+                        if (blockStack.length === 0) {
+                            errors.push(`Line ${lineNum}: Unexpected END statement`);
+                        } else {
+                            const expectedEnd = blockStack[blockStack.length - 1];
+                            if (expectedEnd !== endType) {
+                                errors.push(`Line ${lineNum}: Expected END ${expectedEnd}, found END ${endType}`);
+                            } else {
+                                blockStack.pop();
+                            }
+                        }
+                    }
+                }
+
+                // Check for required BEGIN/END structure
+                if (!hasBegin) {
+                    errors.push("Main code must be enclosed in BEGIN...END block");
+                }
+                if (hasBegin && !hasEnd) {
+                    errors.push("BEGIN block must be closed with END");
                 }
 
                 if (blockStack.length > 0) {
@@ -944,7 +1006,7 @@ Click line numbers to set breakpoints!"></textarea>
                             i++;
                         }
                         
-                        const keywords = ['IF', 'THEN', 'ELSE', 'ELSEIF', 'END', 'WHILE', 'DO', 'FOR', 'TO', 'OUTPUT', 'PRINT', 'INPUT', 'AND', 'OR'];
+                        const keywords = ['IF', 'THEN', 'ELSE', 'ELSEIF', 'END', 'WHILE', 'DO', 'FOR', 'TO', 'OUTPUT', 'PRINT', 'INPUT', 'AND', 'OR', 'BEGIN', 'FUNCTION', 'METHOD', 'RETURN', 'CALL'];
                         const type = keywords.includes(word) ? 'keyword' : 'variable';
                         tokens.push({ text: word, type });
                         continue;
@@ -963,29 +1025,10 @@ Click line numbers to set breakpoints!"></textarea>
                     pseudocodeDiv.innerHTML = '<div style="color: #999; font-style: italic; padding: 20px;">No valid code to display</div>';
                     return;
                 }
-                
-                let indentLevel = 0;
+
                 pseudocodeDiv.innerHTML = '';
-                
+
                 this.parsedCode.forEach((line, index) => {
-                    const trimmedLine = line.trim();
-                    
-                    if (trimmedLine.startsWith('END ') || 
-                        trimmedLine === 'ELSE' || 
-                        trimmedLine.startsWith('ELSE IF ')) {
-                        indentLevel = Math.max(0, indentLevel - 1);
-                    }
-                    
-                    const indent = '    '.repeat(indentLevel);
-                    const indentedLine = indent + trimmedLine;
-                    
-                    if (trimmedLine.startsWith('IF ') || 
-                        trimmedLine.startsWith('ELSE IF ') ||
-                        trimmedLine === 'ELSE' ||
-                        trimmedLine.startsWith('WHILE ') || 
-                        trimmedLine.startsWith('FOR ')) {
-                        indentLevel++;
-                    }
                     
                     const isBreakpoint = this.breakpoints.has(index);
                     
@@ -1004,8 +1047,8 @@ Click line numbers to set breakpoints!"></textarea>
                     
                     const lineContentDiv = document.createElement('div');
                     lineContentDiv.className = 'line-content';
-                    
-                    this.applySyntaxHighlighting(indentedLine, lineContentDiv);
+
+                    this.applySyntaxHighlighting(line, lineContentDiv); // Use original line with preserved indentation
                     
                     lineDiv.appendChild(lineNumDiv);
                     lineDiv.appendChild(lineContentDiv);
@@ -1247,16 +1290,90 @@ Click line numbers to set breakpoints!"></textarea>
                     alert('Please parse your code first!');
                     return;
                 }
-                
+
+                // Find the BEGIN statement to start main program execution
+                let beginIndex = -1;
+                for (let i = 0; i < this.parsedCode.length; i++) {
+                    if (this.parsedCode[i].trim() === 'BEGIN') {
+                        beginIndex = i;
+                        break;
+                    }
+                }
+
+                if (beginIndex === -1) {
+                    alert('No BEGIN statement found! Main code must be enclosed in BEGIN...END.');
+                    return;
+                }
+
                 this.isRunning = true;
-                this.currentStep = -1;
+                this.currentStep = beginIndex - 1; // Start just before BEGIN so nextStep() lands on BEGIN
                 this.stepCounter = 0;
-                this.executionContext = { loopStacks: [], ifStack: [], breakpointPaused: false };
+                this.executionContext = {
+                    loopStacks: [],
+                    ifStack: [],
+                    breakpointPaused: false,
+                    functions: this.parseFunctions()
+                };
                 this.executionHistory = [];
                 this.initializeVariables();
                 this.updateButtons();
                 this.updateDebugInfo();
                 this.nextStep();
+            }
+
+            parseFunctions() {
+                const functions = {};
+                let i = 0;
+
+                while (i < this.parsedCode.length) {
+                    const line = this.parsedCode[i];
+                    const trimmedLine = line.trim();
+
+                    if (trimmedLine.startsWith('FUNCTION ') || trimmedLine.startsWith('METHOD ')) {
+                        const match = trimmedLine.match(/^(FUNCTION|METHOD)\s+(\w+)\s*(\([^)]*\))?\s*$/);
+                        if (match) {
+                            const type = match[1];
+                            const name = match[2];
+                            const params = match[3] ? match[3].slice(1, -1).split(',').map(p => p.trim()).filter(p => p) : [];
+
+                            const startLine = i;
+                            let endLine = -1;
+                            let depth = 1;
+
+                            // Find the corresponding END FUNCTION/METHOD
+                            for (let j = i + 1; j < this.parsedCode.length; j++) {
+                                const nextLine = this.parsedCode[j].trim();
+                                if (nextLine.startsWith('FUNCTION ') || nextLine.startsWith('METHOD ')) {
+                                    depth++;
+                                } else if (nextLine === `END ${type}`) {
+                                    depth--;
+                                    if (depth === 0) {
+                                        endLine = j;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            if (endLine !== -1) {
+                                functions[name] = {
+                                    type: type,
+                                    params: params,
+                                    startLine: startLine,
+                                    endLine: endLine,
+                                    body: this.parsedCode.slice(startLine + 1, endLine)
+                                };
+                            }
+
+                            i = endLine + 1;
+                        } else {
+                            i++;
+                        }
+                    } else {
+                        i++;
+                    }
+                }
+
+                return functions;
             }
 
             reset() {
@@ -1345,7 +1462,7 @@ Click line numbers to set breakpoints!"></textarea>
                 const nextLineIndex = this.currentStep + 1;
                 if (nextLineIndex >= this.parsedCode.length) return;
 
-                const nextLine = this.parsedCode[nextLineIndex];
+                const nextLine = this.parsedCode[nextLineIndex].trim();
 
                 if (nextLine === 'END FOR') {
                     const loop = this.executionContext.loopStacks[this.executionContext.loopStacks.length - 1];
@@ -1373,48 +1490,69 @@ Click line numbers to set breakpoints!"></textarea>
 
             executeStep(line) {
                 try {
-                    if (line.includes('←') && !line.startsWith('IF ') && !line.startsWith('ELSE IF ') && 
-                        !line.startsWith('WHILE ') && !line.startsWith('FOR ') && 
-                        !line.startsWith('OUTPUT ') && !line.startsWith('PRINT ')) {
+                    const trimmedLine = line.trim();
+
+                    // Handle main program structure
+                    if (trimmedLine === 'BEGIN') {
+                        // Begin main program execution - no special action needed
+                        return;
+                    } else if (trimmedLine === 'END') {
+                        // End of main program - no special action needed
+                        return;
+                    }
+                    // Handle function/method definitions (skip during main execution)
+                    else if (trimmedLine.startsWith('FUNCTION ') || trimmedLine.startsWith('METHOD ')) {
+                        // Skip function definitions during main execution
+                        this.skipToEnd(trimmedLine.startsWith('FUNCTION') ? 'FUNCTION' : 'METHOD');
+                        return;
+                    } else if (trimmedLine.match(/^END (FUNCTION|METHOD)$/)) {
+                        // This should only be reached when skipping function definitions
+                        return;
+                    }
+                    // Handle variable assignments
+                    else if (trimmedLine.includes('←') && !trimmedLine.startsWith('IF ') && !trimmedLine.startsWith('ELSE IF ') &&
+                        !trimmedLine.startsWith('WHILE ') && !trimmedLine.startsWith('FOR ') &&
+                        !trimmedLine.startsWith('OUTPUT ') && !trimmedLine.startsWith('PRINT ') &&
+                        !trimmedLine.startsWith('FUNCTION ') && !trimmedLine.startsWith('METHOD ')) {
                         
-                        const parts = line.split('←');
+                        const parts = trimmedLine.split('←');
                         if (parts.length === 2) {
                             const varName = parts[0].trim();
                             const value = this.evaluateExpression(parts[1].trim());
                             this.updateVariable(varName, value);
                         }
-                    } else if (line.startsWith('OUTPUT ')) {
-                        const expr = line.substring(7);
+                    } else if (trimmedLine.startsWith('OUTPUT ')) {
+                        const expr = trimmedLine.substring(7);
                         const value = this.evaluateExpression(expr);
                         this.addOutput(String(value));
-                    } else if (line.startsWith('PRINT ')) {
-                        const expr = line.substring(6);
+                    } else if (trimmedLine.startsWith('PRINT ')) {
+                        const expr = trimmedLine.substring(6);
                         const value = this.evaluateExpression(expr);
                         this.addOutput(String(value));
-                    } else if (line.startsWith('IF ')) {
-                        const thenIndex = line.indexOf('THEN');
+                    } else if (trimmedLine.startsWith('IF ')) {
+                        const thenIndex = trimmedLine.indexOf('THEN');
                         if (thenIndex > 0) {
-                            const condition = line.substring(3, thenIndex).trim();
+                            const condition = trimmedLine.substring(3, thenIndex).trim();
                             const result = this.evaluateCondition(condition);
-                            
+
                             this.executionContext.ifStack.push({
                                 startLine: this.currentStep,
                                 conditionMet: result,
                                 hasExecuted: result
                             });
-                            
+
                             if (!result) {
                                 this.skipToNextIfBlock();
                             }
                         }
-                    } else if (line.startsWith('ELSE IF ')) {
+                    } else if (trimmedLine.startsWith('ELSE IF ')) {
                         const currentIf = this.executionContext.ifStack[this.executionContext.ifStack.length - 1];
                         if (currentIf && !currentIf.hasExecuted) {
-                            const thenIndex = line.indexOf('THEN');
+                            const thenIndex = trimmedLine.indexOf('THEN');
                             if (thenIndex > 0) {
-                                const condition = line.substring(8, thenIndex).trim();
+                                const condition = trimmedLine.substring(8, thenIndex).trim();
                                 const result = this.evaluateCondition(condition);
-                                
+
                                 if (result) {
                                     currentIf.hasExecuted = true;
                                     currentIf.conditionMet = true;
@@ -1425,17 +1563,17 @@ Click line numbers to set breakpoints!"></textarea>
                         } else {
                             this.skipToEndIf();
                         }
-                    } else if (line === 'ELSE') {
+                    } else if (trimmedLine === 'ELSE') {
                         const currentIf = this.executionContext.ifStack[this.executionContext.ifStack.length - 1];
                         if (currentIf && currentIf.hasExecuted) {
                             this.skipToEndIf();
                         }
-                    } else if (line === 'END IF') {
+                    } else if (trimmedLine === 'END IF') {
                         this.executionContext.ifStack.pop();
-                    } else if (line.startsWith('WHILE ')) {
-                        const doIndex = line.indexOf('DO');
+                    } else if (trimmedLine.startsWith('WHILE ')) {
+                        const doIndex = trimmedLine.indexOf('DO');
                         if (doIndex > 0) {
-                            const condition = line.substring(6, doIndex).trim();
+                            const condition = trimmedLine.substring(6, doIndex).trim();
                             const result = this.evaluateCondition(condition);
                             if (result) {
                                 this.executionContext.loopStacks.push({
@@ -1447,14 +1585,14 @@ Click line numbers to set breakpoints!"></textarea>
                                 this.skipToEnd('WHILE');
                             }
                         }
-                    } else if (line === 'END WHILE') {
+                    } else if (trimmedLine === 'END WHILE') {
                         // Only reached when loop actually ends (checkLoopContinuation handles continuation)
                         const loop = this.executionContext.loopStacks[this.executionContext.loopStacks.length - 1];
                         if (loop && loop.type === 'WHILE') {
                             this.executionContext.loopStacks.pop();
                         }
-                    } else if (line.startsWith('FOR ')) {
-                        const match = line.match(/FOR (\w+) ← (.+) TO (.+) DO/);
+                    } else if (trimmedLine.startsWith('FOR ')) {
+                        const match = trimmedLine.match(/FOR (\w+) ← (.+) TO (.+) DO/);
                         if (match) {
                             const varName = match[1];
                             const startVal = this.evaluateExpression(match[2]);
@@ -1475,7 +1613,7 @@ Click line numbers to set breakpoints!"></textarea>
                                 this.skipToEnd('FOR');
                             }
                         }
-                    } else if (line === 'END FOR') {
+                    } else if (trimmedLine === 'END FOR') {
                         // Only reached when loop actually ends (checkLoopContinuation handles continuation)
                         const loop = this.executionContext.loopStacks[this.executionContext.loopStacks.length - 1];
                         if (loop && loop.type === 'FOR') {
