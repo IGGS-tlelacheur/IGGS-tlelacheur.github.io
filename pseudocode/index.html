@@ -603,7 +603,7 @@ Supported commands:
 • OUTPUT variable/value
 • IF condition THEN ... END IF
 • WHILE condition DO ... END WHILE
-• FOR variable ← start TO end DO ... END FOR
+• FOR variable ← start TO end [STEP increment] DO ... END FOR
 
 Boolean logic:
 • AND, OR for combining conditions
@@ -625,6 +625,7 @@ Click line numbers to set breakpoints!"></textarea>
                         <option value="logical">Logical Operators (AND/OR)</option>
                         <option value="functions">Functions</option>
                         <option value="methods">Methods</option>
+                        <option value="steps">FOR Loops with Steps</option>
                     </select>
                 </div>
                 
@@ -714,9 +715,9 @@ Click line numbers to set breakpoints!"></textarea>
                     <h3>Control Structures</h3>
                     
                     <div class="keyword-item">
-                        <div class="keyword-syntax">FOR variable ← start TO end DO<br>&nbsp;&nbsp;&nbsp;&nbsp;statements<br>END FOR</div>
-                        <div class="keyword-description">Repeats statements with counter from start to end.</div>
-                        <div class="keyword-example">FOR i ← 1 TO 5 DO<br>&nbsp;&nbsp;&nbsp;&nbsp;square ← i ^ 2<br>&nbsp;&nbsp;&nbsp;&nbsp;PRINT square<br>END FOR</div>
+                        <div class="keyword-syntax">FOR variable ← start TO end [STEP increment] DO<br>&nbsp;&nbsp;&nbsp;&nbsp;statements<br>END FOR</div>
+                        <div class="keyword-description">Repeats statements with counter from start to end. STEP is optional (default 1). Use negative step to count backwards.</div>
+                        <div class="keyword-example">FOR i ← 1 TO 10 STEP 2 DO<br>&nbsp;&nbsp;&nbsp;&nbsp;PRINT i<br>END FOR<br><br>FOR i ← 10 TO 1 STEP -1 DO<br>&nbsp;&nbsp;&nbsp;&nbsp;PRINT i<br>END FOR</div>
                     </div>
                 </div>
             </div>
@@ -764,7 +765,8 @@ Click line numbers to set breakpoints!"></textarea>
                     factorial: 'BEGIN\n    n ← 5\n    factorial ← 1\n    i ← 1\n    WHILE i <= n DO\n        factorial ← factorial * i\n        i ← i + 1\n    END WHILE\n    PRINT "Factorial of " + n + " is " + factorial\nEND',
                     logical: 'BEGIN\n    x ← 7\n    y ← 3\n    z ← 0\n    \n    IF x > 5 AND y < 10 THEN\n        PRINT "Both conditions met"\n    END IF\n    \n    IF x < 5 OR y < 5 THEN\n        PRINT "At least one is less than 5"\n    END IF\n    \n    IF (x > 0 AND y > 0) OR z = 0 THEN\n        PRINT "Complex condition is true"\n    END IF\nEND',
                     functions: 'FUNCTION square(x)\n    result ← x * x\n    RETURN result\nEND FUNCTION\n\nFUNCTION add(a, b)\n    RETURN a + b\nEND FUNCTION\n\nBEGIN\n    num ← 5\n    sq ← square(num)\n    doubled ← add(sq, sq)\n    PRINT "Square of " + num + " is " + sq\n    PRINT "Double the square is " + doubled\nEND',
-                    methods: 'METHOD printGreeting(name)\n    PRINT "Hello, " + name + "!"\nEND METHOD\n\nMETHOD showInfo(value, label)\n    PRINT label + ": " + value\nEND METHOD\n\nBEGIN\n    username ← "Alice"\n    age ← 25\n    printGreeting(username)\n    showInfo(age, "Age")\n    showInfo(username, "Name")\nEND'
+                    methods: 'METHOD printGreeting(name)\n    PRINT "Hello, " + name + "!"\nEND METHOD\n\nMETHOD showInfo(value, label)\n    PRINT label + ": " + value\nEND METHOD\n\nBEGIN\n    username ← "Alice"\n    age ← 25\n    printGreeting(username)\n    showInfo(age, "Age")\n    showInfo(username, "Name")\nEND',
+                    steps: 'BEGIN\n    PRINT "Odd numbers from 1 to 10:"\n    FOR i ← 1 TO 10 STEP 2 DO\n        PRINT i\n    END FOR\n    \n    PRINT "Countdown from 10 to 0:"\n    FOR i ← 10 TO 0 STEP -1 DO\n        PRINT i\n    END FOR\n    \n    PRINT "Multiples of 3 from 0 to 15:"\n    FOR i ← 0 TO 15 STEP 3 DO\n        PRINT i\n    END FOR\nEND'
                 };
                 
                 this.initializeEventListeners();
@@ -923,7 +925,7 @@ Click line numbers to set breakpoints!"></textarea>
                         blockStack.push('WHILE');
                     } else if (trimmedLine.startsWith('FOR ')) {
                         if (!trimmedLine.includes('←') || !trimmedLine.includes('TO') || !trimmedLine.includes('DO')) {
-                            errors.push(`Line ${lineNum}: FOR must be 'FOR var ← start TO end DO'`);
+                            errors.push(`Line ${lineNum}: FOR must be 'FOR var ← start TO end [STEP increment] DO'`);
                         }
                         blockStack.push('FOR');
                     } else if (trimmedLine.match(/^END (IF|WHILE|FOR|FUNCTION|METHOD)$/)) {
@@ -1035,7 +1037,7 @@ Click line numbers to set breakpoints!"></textarea>
                             i++;
                         }
                         
-                        const keywords = ['IF', 'THEN', 'ELSE', 'ELSEIF', 'END', 'WHILE', 'DO', 'FOR', 'TO', 'OUTPUT', 'PRINT', 'INPUT', 'AND', 'OR', 'BEGIN', 'FUNCTION', 'METHOD', 'RETURN', 'CALL'];
+                        const keywords = ['IF', 'THEN', 'ELSE', 'ELSEIF', 'END', 'WHILE', 'DO', 'FOR', 'TO', 'STEP', 'OUTPUT', 'PRINT', 'INPUT', 'AND', 'OR', 'BEGIN', 'FUNCTION', 'METHOD', 'RETURN', 'CALL'];
                         const type = keywords.includes(word) ? 'keyword' : 'variable';
                         tokens.push({ text: word, type });
                         continue;
@@ -1716,9 +1718,17 @@ Click line numbers to set breakpoints!"></textarea>
                     const loop = this.executionContext.loopStacks[this.executionContext.loopStacks.length - 1];
                     if (loop && loop.type === 'FOR') {
                         const currentVal = this.variables[loop.varName];
-                        if (currentVal < loop.endVal) {
-                            // Continue loop: increment and jump back to FOR line
-                            this.updateVariable(loop.varName, currentVal + 1);
+                        const stepVal = loop.stepVal || 1;
+                        const nextVal = currentVal + stepVal;
+
+                        // Check if loop should continue based on step direction
+                        const shouldContinue = stepVal > 0 ?
+                            nextVal <= loop.endVal :
+                            nextVal >= loop.endVal;
+
+                        if (shouldContinue) {
+                            // Continue loop: apply step and jump back to FOR line
+                            this.updateVariable(loop.varName, nextVal);
                             this.currentStep = loop.startLine - 1; // -1 because nextStep() will increment
                             return;
                         }
@@ -1856,23 +1866,37 @@ Click line numbers to set breakpoints!"></textarea>
                             this.executionContext.loopStacks.pop();
                         }
                     } else if (trimmedLine.startsWith('FOR ')) {
-                        const match = trimmedLine.match(/FOR (\w+) ← (.+) TO (.+) DO/);
+                        // Match both "FOR var ← start TO end DO" and "FOR var ← start TO end STEP increment DO"
+                        const match = trimmedLine.match(/FOR (\w+) ← (.+) TO (.+?)(?:\s+STEP\s+(.+?))?\s+DO/);
                         if (match) {
                             const varName = match[1];
                             const startVal = this.evaluateExpression(match[2]);
                             const endVal = this.evaluateExpression(match[3]);
-                            
+                            const stepVal = match[4] ? this.evaluateExpression(match[4]) : 1;
+
+                            // Only set the variable to startVal on the first execution (when loop is not yet in stack)
                             if (!this.executionContext.loopStacks.find(loop => loop.type === 'FOR' && loop.varName === varName)) {
                                 this.updateVariable(varName, startVal);
                             }
-                            
-                            if (this.variables[varName] <= endVal) {
-                                this.executionContext.loopStacks.push({
-                                    type: 'FOR',
-                                    startLine: this.currentStep,
-                                    varName: varName,
-                                    endVal: endVal
-                                });
+                            // If loop is already in stack, we're continuing - don't change the variable
+
+                            // Check if loop should execute based on current variable value and step direction
+                            const currentVal = this.variables[varName];
+                            const shouldExecute = stepVal > 0 ?
+                                currentVal <= endVal :
+                                currentVal >= endVal;
+
+                            if (shouldExecute) {
+                                // Only push to loop stack if this is the first execution
+                                if (!this.executionContext.loopStacks.find(loop => loop.type === 'FOR' && loop.varName === varName)) {
+                                    this.executionContext.loopStacks.push({
+                                        type: 'FOR',
+                                        startLine: this.currentStep,
+                                        varName: varName,
+                                        endVal: endVal,
+                                        stepVal: stepVal
+                                    });
+                                }
                             } else {
                                 this.skipToEnd('FOR');
                             }
