@@ -716,6 +716,15 @@ Click line numbers to set breakpoints!"></textarea>
     </div>
 
     <script>
+        // Special exception for function calls that need step-through execution
+        class FunctionCallException extends Error {
+            constructor(functionName) {
+                super(`Function call: ${functionName}`);
+                this.name = 'FunctionCallException';
+                this.functionName = functionName;
+            }
+        }
+
         class MathematicalPseudocodeAnimator {
             constructor() {
                 this.currentStep = -1;
@@ -737,7 +746,7 @@ Click line numbers to set breakpoints!"></textarea>
                     loop: 'BEGIN\n    count ← 0\n    total ← 0\n    WHILE count < 5 DO\n        total ← total + count\n        count ← count + 1\n    END WHILE\n    PRINT "Total: " + total\nEND',
                     factorial: 'BEGIN\n    n ← 5\n    factorial ← 1\n    i ← 1\n    WHILE i <= n DO\n        factorial ← factorial * i\n        i ← i + 1\n    END WHILE\n    PRINT "Factorial of " + n + " is " + factorial\nEND',
                     logical: 'BEGIN\n    x ← 7\n    y ← 3\n    z ← 0\n    \n    IF x > 5 AND y < 10 THEN\n        PRINT "Both conditions met"\n    END IF\n    \n    IF x < 5 OR y < 5 THEN\n        PRINT "At least one is less than 5"\n    END IF\n    \n    IF (x > 0 AND y > 0) OR z = 0 THEN\n        PRINT "Complex condition is true"\n    END IF\nEND',
-                    functions: 'FUNCTION square(x)\n    result ← x * x\n    RETURN result\nEND FUNCTION\n\nFUNCTION factorial(n)\n    IF n <= 1 THEN\n        RETURN 1\n    END IF\n    RETURN n * factorial(n - 1)\nEND FUNCTION\n\nBEGIN\n    num ← 5\n    sq ← square(num)\n    fact ← factorial(num)\n    PRINT "Square of " + num + " is " + sq\n    PRINT "Factorial of " + num + " is " + fact\nEND'
+                    functions: 'FUNCTION square(x)\n    result ← x * x\n    RETURN result\nEND FUNCTION\n\nFUNCTION factorial(n)\n    result ← 1\n    i ← 1\n    WHILE i <= n DO\n        result ← result * i\n        i ← i + 1\n    END WHILE\n    RETURN result\nEND FUNCTION\n\nFUNCTION add(a, b)\n    RETURN a + b\nEND FUNCTION\n\nBEGIN\n    num ← 5\n    sq ← square(num)\n    fact ← factorial(num)\n    sum ← add(sq, fact)\n    PRINT "Square of " + num + " is " + sq\n    PRINT "Factorial of " + num + " is " + fact\n    PRINT "Sum of square and factorial is " + sum\nEND'
                 };
                 
                 this.initializeEventListeners();
@@ -1134,11 +1143,30 @@ Click line numbers to set breakpoints!"></textarea>
 
             evaluateExpression(expr) {
                 expr = expr.trim();
-                
+
+                // Check for function calls first
+                const funcCallMatch = expr.match(/^(\w+)\s*\(([^)]*)\)$/);
+                if (funcCallMatch) {
+                    const funcName = funcCallMatch[1];
+                    const argsStr = funcCallMatch[2];
+                    return this.callFunction(funcName, argsStr);
+                }
+
+                // Check for function calls in complex expressions (like x + func(y))
+                if (expr.includes('(') && expr.includes(')')) {
+                    // Replace function calls with their return values
+                    expr = expr.replace(/(\w+)\s*\(([^)]*)\)/g, (match, funcName, argsStr) => {
+                        if (this.executionContext.functions && this.executionContext.functions[funcName]) {
+                            return this.callFunction(funcName, argsStr);
+                        }
+                        return match; // Not a function call, leave as is
+                    });
+                }
+
                 if (expr.includes('+') && (expr.includes('"') || expr.includes("'"))) {
                     return this.evaluateStringExpression(expr);
                 }
-                
+
                 if (expr.includes('[') && expr.includes(']')) {
                     const match = expr.match(/(\w+)\[(.+)\]/);
                     if (match) {
@@ -1169,6 +1197,101 @@ Click line numbers to set breakpoints!"></textarea>
                 }
                 
                 return this.evaluateArithmetic(expr);
+            }
+
+            callFunction(funcName, argsStr) {
+                // Check if function exists
+                if (!this.executionContext.functions || !this.executionContext.functions[funcName]) {
+                    throw new Error(`Function '${funcName}' is not defined`);
+                }
+
+                const func = this.executionContext.functions[funcName];
+
+                // Parse arguments
+                const args = argsStr.trim() ? argsStr.split(',').map(arg => this.evaluateExpression(arg.trim())) : [];
+
+                // Check parameter count
+                if (args.length !== func.params.length) {
+                    throw new Error(`Function '${funcName}' expects ${func.params.length} arguments, got ${args.length}`);
+                }
+
+                // Check if we're returning from this function call
+                if (this.executionContext.pendingReturn &&
+                    this.executionContext.pendingReturn.functionName === funcName) {
+                    const returnValue = this.executionContext.pendingReturn.returnValue;
+                    this.executionContext.pendingReturn = null;
+                    console.log(`Function ${funcName} returning value:`, returnValue); // Debug
+                    return returnValue;
+                }
+
+                // Initiate the function call for step-by-step execution
+                this.initiateFunctionCall(funcName, args, func);
+
+                // Throw a special exception to pause execution and jump to function
+                throw new FunctionCallException(funcName);
+            }
+
+            initiateFunctionCall(funcName, args, func) {
+                // Save current execution state to call stack
+                const callFrame = {
+                    functionName: funcName,
+                    returnLine: this.currentStep,
+                    returnVariables: JSON.parse(JSON.stringify(this.variables)),
+                    waitingForExecution: this.executionContext.waitingForExecution,
+                    returnValue: undefined
+                };
+
+                this.executionContext.callStack.push(callFrame);
+
+                // Set up function parameters as local variables (clear all globals)
+                this.variables = {};
+                for (let i = 0; i < func.params.length; i++) {
+                    this.variables[func.params[i]] = args[i];
+                }
+
+                // Jump to function start (skip the FUNCTION declaration line)
+                this.currentStep = func.startLine;
+                this.executionContext.waitingForExecution = true;
+                this.executionContext.inFunction = true;
+
+                // Render variables to show the new local scope
+                this.renderVariables();
+            }
+
+            returnFromFunction(returnValue) {
+                console.log('Returning from function with value:', returnValue); // Debug
+
+                // Pop the call frame from the stack
+                const callFrame = this.executionContext.callStack.pop();
+
+                if (callFrame) {
+                    console.log('Restoring to line:', callFrame.returnLine); // Debug
+                    console.log('Function name:', callFrame.functionName); // Debug
+
+                    // Restore the previous execution state
+                    this.currentStep = callFrame.returnLine;
+                    this.variables = callFrame.returnVariables;
+                    this.executionContext.inFunction = this.executionContext.callStack.length > 0;
+
+                    // Set up the return value to be used when the line is re-executed
+                    this.executionContext.pendingReturn = {
+                        functionName: callFrame.functionName,
+                        returnValue: returnValue
+                    };
+
+                    console.log('Set pendingReturn:', this.executionContext.pendingReturn); // Debug
+
+                    // Update the UI to reflect the restored state
+                    this.renderVariables();
+
+                    // Set up for re-execution of the calling line
+                    this.executionContext.waitingForExecution = true;
+
+                    // Highlight the calling line again
+                    this.highlightLine(this.currentStep);
+                    this.updateButtons();
+                    this.updateDebugInfo();
+                }
             }
 
             evaluateStringExpression(expr) {
@@ -1267,8 +1390,34 @@ Click line numbers to set breakpoints!"></textarea>
                         line.classList.add('completed');
                     } else if (index === lineIndex) {
                         line.classList.add('current');
+                        // Auto-scroll to keep the current line visible
+                        this.scrollToLine(line);
                     }
                 });
+            }
+
+            scrollToLine(lineElement) {
+                const codeContainer = document.getElementById('processedCode');
+                if (!codeContainer || !lineElement) return;
+
+                const containerRect = codeContainer.getBoundingClientRect();
+                const lineRect = lineElement.getBoundingClientRect();
+
+                // Check if line is above the visible area
+                if (lineRect.top < containerRect.top) {
+                    // Scroll up to show the line with some padding
+                    lineElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+                // Check if line is below the visible area
+                else if (lineRect.bottom > containerRect.bottom) {
+                    // Scroll down to show the line with some padding
+                    lineElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                }
+                // If line is partially visible or needs centering for better visibility
+                else if (lineRect.top < containerRect.top + 50 || lineRect.bottom > containerRect.bottom - 50) {
+                    // Center the line in the view for better visibility
+                    lineElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
             }
 
             addOutput(text) {
@@ -1313,7 +1462,10 @@ Click line numbers to set breakpoints!"></textarea>
                     ifStack: [],
                     breakpointPaused: false,
                     waitingForExecution: false,
-                    functions: this.parseFunctions()
+                    functions: this.parseFunctions(),
+                    callStack: [],
+                    inFunction: false,
+                    pendingReturn: null
                 };
                 this.executionHistory = [];
                 this.initializeVariables();
@@ -1382,7 +1534,7 @@ Click line numbers to set breakpoints!"></textarea>
                 this.autoRunning = false;
                 this.currentStep = -1;
                 this.stepCounter = 0;
-                this.executionContext = { loopStacks: [], ifStack: [], breakpointPaused: false, waitingForExecution: false };
+                this.executionContext = { loopStacks: [], ifStack: [], breakpointPaused: false, waitingForExecution: false, callStack: [], inFunction: false, pendingReturn: null };
                 this.executionHistory = [];
                 this.initializeVariables();
                 this.updateButtons();
@@ -1420,7 +1572,8 @@ Click line numbers to set breakpoints!"></textarea>
                 if (!this.isRunning) return;
 
                 // If this is the first step or we just executed a line, move to next line
-                if (!this.executionContext.waitingForExecution) {
+                // BUT if we have a pending return, we need to stay on the current line to re-execute
+                if (!this.executionContext.waitingForExecution && !this.executionContext.pendingReturn) {
                     this.currentStep++;
 
                     if (this.currentStep >= this.parsedCode.length) {
@@ -1522,12 +1675,16 @@ Click line numbers to set breakpoints!"></textarea>
                         !trimmedLine.startsWith('WHILE ') && !trimmedLine.startsWith('FOR ') &&
                         !trimmedLine.startsWith('OUTPUT ') && !trimmedLine.startsWith('PRINT ') &&
                         !trimmedLine.startsWith('FUNCTION ') && !trimmedLine.startsWith('METHOD ')) {
-                        
+
+                        console.log('Executing assignment:', trimmedLine); // Debug
                         const parts = trimmedLine.split('←');
                         if (parts.length === 2) {
                             const varName = parts[0].trim();
+                            console.log('Variable name:', varName); // Debug
                             const value = this.evaluateExpression(parts[1].trim());
+                            console.log('Computed value:', value); // Debug
                             this.updateVariable(varName, value);
+                            console.log('Assignment completed'); // Debug
                         }
                     } else if (trimmedLine.startsWith('OUTPUT ')) {
                         const expr = trimmedLine.substring(7);
@@ -1627,8 +1784,36 @@ Click line numbers to set breakpoints!"></textarea>
                         if (loop && loop.type === 'FOR') {
                             this.executionContext.loopStacks.pop();
                         }
+                    } else if (trimmedLine.startsWith('RETURN ')) {
+                        if (this.executionContext.inFunction && this.executionContext.callStack.length > 0) {
+                            // Handle return from function
+                            const returnExpr = trimmedLine.substring(7).trim();
+                            const returnValue = this.evaluateExpression(returnExpr);
+                            this.returnFromFunction(returnValue);
+                        } else {
+                            // Handle return statement in main program (shouldn't happen, but for safety)
+                            const returnExpr = trimmedLine.substring(7).trim();
+                            const returnValue = this.evaluateExpression(returnExpr);
+                            this.addOutput(`RETURN: ${returnValue}`);
+                            this.isRunning = false;
+                        }
+                    } else if (trimmedLine === 'RETURN') {
+                        if (this.executionContext.inFunction && this.executionContext.callStack.length > 0) {
+                            // Handle return from function without value
+                            this.returnFromFunction(undefined);
+                        } else {
+                            // Handle return without value in main program
+                            this.addOutput(`RETURN`);
+                            this.isRunning = false;
+                        }
                     }
                 } catch (error) {
+                    if (error instanceof FunctionCallException) {
+                        // Function call initiated - execution will continue from function
+                        // Don't treat this as an error
+                        return;
+                    }
+
                     this.addOutput(`Error: ${error.message}`);
                     const currentLine = document.querySelector(`[data-line="${this.currentStep}"]`);
                     if (currentLine) {
