@@ -787,7 +787,9 @@ Click line numbers to set breakpoints!"></textarea>
                     .filter(line => line.length > 0)
                     .map(line => {
                         line = line.replace(/<-/g, '←');
-                        line = line.replace(/\b(if|then|else|elseif|end|while|do|for|to|output|print|input|and|or)\b/gi, 
+                        // Normalize spacing around ← operator: ensure single space on both sides
+                        line = line.replace(/\s*←\s*/g, ' ← ');
+                        line = line.replace(/\b(if|then|else|elseif|end|while|do|for|to|output|print|input|and|or)\b/gi,
                             match => match.toUpperCase());
                         return line;
                     });
@@ -1330,8 +1332,43 @@ Click line numbers to set breakpoints!"></textarea>
 
                 this.highlightLine(this.currentStep);
                 this.executeStep(this.parsedCode[this.currentStep]);
+
+                // Check if next line is END FOR/END WHILE and we need to continue loop
+                this.checkLoopContinuation();
+
                 this.updateButtons();
                 this.updateDebugInfo();
+            }
+
+            checkLoopContinuation() {
+                // Check if the next line is END FOR or END WHILE
+                const nextLineIndex = this.currentStep + 1;
+                if (nextLineIndex >= this.parsedCode.length) return;
+
+                const nextLine = this.parsedCode[nextLineIndex];
+
+                if (nextLine === 'END FOR') {
+                    const loop = this.executionContext.loopStacks[this.executionContext.loopStacks.length - 1];
+                    if (loop && loop.type === 'FOR') {
+                        const currentVal = this.variables[loop.varName];
+                        if (currentVal < loop.endVal) {
+                            // Continue loop: increment and jump back to FOR line
+                            this.updateVariable(loop.varName, currentVal + 1);
+                            this.currentStep = loop.startLine - 1; // -1 because nextStep() will increment
+                            return;
+                        }
+                    }
+                } else if (nextLine === 'END WHILE') {
+                    const loop = this.executionContext.loopStacks[this.executionContext.loopStacks.length - 1];
+                    if (loop && loop.type === 'WHILE') {
+                        const result = this.evaluateCondition(loop.condition);
+                        if (result) {
+                            // Continue loop: jump back to WHILE line
+                            this.currentStep = loop.startLine - 1; // -1 because nextStep() will increment
+                            return;
+                        }
+                    }
+                }
             }
 
             executeStep(line) {
@@ -1411,14 +1448,10 @@ Click line numbers to set breakpoints!"></textarea>
                             }
                         }
                     } else if (line === 'END WHILE') {
+                        // Only reached when loop actually ends (checkLoopContinuation handles continuation)
                         const loop = this.executionContext.loopStacks[this.executionContext.loopStacks.length - 1];
                         if (loop && loop.type === 'WHILE') {
-                            const result = this.evaluateCondition(loop.condition);
-                            if (result) {
-                                this.currentStep = loop.startLine - 1;
-                            } else {
-                                this.executionContext.loopStacks.pop();
-                            }
+                            this.executionContext.loopStacks.pop();
                         }
                     } else if (line.startsWith('FOR ')) {
                         const match = line.match(/FOR (\w+) ← (.+) TO (.+) DO/);
@@ -1443,15 +1476,10 @@ Click line numbers to set breakpoints!"></textarea>
                             }
                         }
                     } else if (line === 'END FOR') {
+                        // Only reached when loop actually ends (checkLoopContinuation handles continuation)
                         const loop = this.executionContext.loopStacks[this.executionContext.loopStacks.length - 1];
                         if (loop && loop.type === 'FOR') {
-                            const currentVal = this.variables[loop.varName];
-                            if (currentVal < loop.endVal) {
-                                this.updateVariable(loop.varName, currentVal + 1);
-                                this.currentStep = loop.startLine;
-                            } else {
-                                this.executionContext.loopStacks.pop();
-                            }
+                            this.executionContext.loopStacks.pop();
                         }
                     }
                 } catch (error) {
