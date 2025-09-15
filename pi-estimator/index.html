@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pi Estimation Methods</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .method-selector {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .method-btn {
+            padding: 12px 24px;
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.3);
+            color: white;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 16px;
+            backdrop-filter: blur(10px);
+        }
+
+        .method-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .method-btn.active {
+            background: rgba(255,255,255,0.4);
+            border-color: rgba(255,255,255,0.6);
+        }
+
+        .visualization-area {
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
+            flex-wrap: wrap;
+        }
+
+        canvas {
+            flex: 1;
+            width: 100%;
+            max-width: 650px;
+            height: 500px;
+            background: white;
+            border-radius: 10px;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .info-panel {
+            flex: 1;
+            min-width: 300px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .pi-display {
+            font-size: 2.5em;
+            font-weight: bold;
+            text-align: center;
+            margin: 10px 0;
+            padding: 15px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .stats {
+            margin: 15px 0;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            padding: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 5px;
+        }
+
+        .controls {
+            margin: 15px 0;
+            text-align: center;
+        }
+
+        .control-btn {
+            padding: 10px 20px;
+            margin: 5px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .control-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .method-description {
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            line-height: 1.6;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .pulsing {
+            animation: pulse 2s infinite;
+        }
+
+        .speed-control {
+            margin: 10px 0;
+            text-align: center;
+        }
+
+        .speed-control label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .slider {
+            width: 200px;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255,255,255,0.3);
+            outline: none;
+            margin: 0 10px;
+            cursor: pointer;
+        }
+
+        .slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #fff;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+        }
+
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #fff;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        #speedValue, #massValue {
+            display: inline-block;
+            min-width: 40px;
+            font-weight: bold;
+        }
+
+        .mass-control {
+            margin: 10px 0;
+            text-align: center;
+        }
+
+        .mass-control label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .method-description {
+            margin: 10px 0;
+            padding: 12px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>π Estimation Methods</h1>
+
+        <div class="method-selector">
+            <button class="method-btn active" data-method="monte-carlo">Monte Carlo</button>
+            <button class="method-btn" data-method="leibniz">Leibniz</button>
+            <button class="method-btn" data-method="nilakantha">Nilakantha</button>
+            <button class="method-btn" data-method="buffon">Buffon</button>
+            <button class="method-btn" data-method="basel">Basel</button>
+            <button class="method-btn" data-method="archimedes">Archimedes</button>
+            <button class="method-btn" data-method="colliding-blocks">Blocks</button>
+        </div>
+
+        <div class="visualization-area">
+            <canvas id="piCanvas" width="650" height="500"></canvas>
+
+            <div class="info-panel">
+                <div class="method-description" id="methodDescription">
+                    Select a method to see its description and start the estimation process.
+                </div>
+
+                <div class="pi-display" id="piDisplay">π ≈ 3.14159</div>
+
+                <div class="controls">
+                    <button class="control-btn" id="startBtn">Start</button>
+                    <button class="control-btn" id="pauseBtn">Pause</button>
+                    <button class="control-btn" id="resetBtn">Reset</button>
+
+                    <div class="speed-control">
+                        <label for="speedSlider">Speed:</label>
+                        <input type="range" id="speedSlider" min="1" max="100" value="10" class="slider">
+                        <span id="speedValue">10x</span>
+                    </div>
+
+                    <div class="mass-control" id="massControl" style="display: none;">
+                        <label for="massSlider">Mass Ratio (10^n):</label>
+                        <input type="range" id="massSlider" min="0" max="6" value="2" class="slider">
+                        <span id="massValue">100</span>
+                    </div>
+                </div>
+
+                <div class="stats" id="stats">
+                    <div class="stat-item">
+                        <span>Iterations:</span>
+                        <span id="iterations">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>Error:</span>
+                        <span id="error">0.000%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('piCanvas');
+        const ctx = canvas.getContext('2d');
+        const piDisplay = document.getElementById('piDisplay');
+        const iterationsDisplay = document.getElementById('iterations');
+        const errorDisplay = document.getElementById('error');
+        const speedDisplay = document.getElementById('speed');
+        const methodDescription = document.getElementById('methodDescription');
+
+        let currentMethod = 'monte-carlo';
+        let isRunning = false;
+        let animationId = null;
+        let currentEstimator = null;
+        let methods = {}; // Will be populated after class definitions
+        let animationSpeed = 10; // Default speed multiplier
+        let baseDelay = 200; // Base delay in milliseconds
+
+        class MonteCarloEstimator {
+            constructor(canvas, ctx) {
+                this.canvas = canvas;
+                this.ctx = ctx;
+                this.points = [];
+                this.insideCircle = 0;
+                this.totalPoints = 0;
+                this.setupCanvas();
+            }
+
+            setupCanvas() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+                // Calculate centered dimensions
+                const size = 450; // Much bigger for 650x500 canvas
+                const centerX = this.canvas.width / 2;
+                const centerY = this.canvas.height / 2;
+                const squareX = centerX - size / 2;
+                const squareY = centerY - size / 2;
+                const radius = size / 2;
+
+                // Draw square
+                this.ctx.strokeStyle = '#333';
+                this.ctx.lineWidth = 3;
+                this.ctx.strokeRect(squareX, squareY, size, size);
+
+                // Draw circle
+                this.ctx.beginPath();
+                this.ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+                this.ctx.stroke();
+
+                // Store dimensions for point generation
+                this.squareX = squareX;
+                this.squareY = squareY;
+                this.size = size;
+                this.centerX = centerX;
+                this.centerY = centerY;
+                this.radius = radius;
+            }
+
+            step() {
+                for (let i = 0; i < 5; i++) {
+                    const x = this.squareX + Math.random() * this.size;
+                    const y = this.squareY + Math.random() * this.size;
+
+                    const distanceFromCenter = Math.sqrt((x - this.centerX) ** 2 + (y - this.centerY) ** 2);
+                    const isInside = distanceFromCenter <= this.radius;
+
+                    if (isInside) {
+                        this.insideCircle++;
+                        this.ctx.fillStyle = '#ff4757';
+                    } else {
+                        this.ctx.fillStyle = '#3742fa';
+                    }
+
+                    this.ctx.beginPath();
+                    this.ctx.arc(x, y, 2.5, 0, 2 * Math.PI);
+                    this.ctx.fill();
+
+                    this.totalPoints++;
+                }
+
+                return this.totalPoints > 0 ? (this.insideCircle / this.totalPoints) * 4 : 0;
+            }
+
+            reset() {
+                this.points = [];
+                this.insideCircle = 0;
+                this.totalPoints = 0;
+                this.setupCanvas();
+            }
+
+            getIterations() {
+                return this.totalPoints;
+            }
+        }
+
+        class LeibnizEstimator {
+            constructor(canvas, ctx) {
+                this.canvas = canvas;
+                this.ctx = ctx;
+                this.iterations = 0;
+                this.sum = 0;
+                this.terms = [];
+                this.termDenominators = []; // Store the actual denominators
+                this.currentTerm = null;
+                this.animationStep = 0;
+                this.setupCanvas();
+            }
+
+            setupCanvas() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                this.drawFormula();
+            }
+
+            drawFormula() {
+                this.ctx.fillStyle = '#333';
+                this.ctx.font = '18px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText('π/4 = 1 - 1/3 + 1/5 - 1/7 + 1/9 - ...', this.canvas.width/2, 40);
+
+                // Draw current running sum prominently
+                this.ctx.fillStyle = '#2c3e50';
+                this.ctx.font = '16px monospace';
+                this.ctx.fillText(`Running sum: ${(this.sum * 4).toFixed(8)}`, this.canvas.width/2, 70);
+
+                // Show current term being added
+                if (this.currentTerm !== null) {
+                    const termColor = this.currentTerm > 0 ? '#27ae60' : '#e74c3c';
+                    this.ctx.fillStyle = termColor;
+                    this.ctx.font = '20px monospace';
+                    const n = 2 * this.iterations + 1;
+                    const termText = `${this.currentTerm > 0 ? '+' : ''}1/${n}`;
+                    this.ctx.fillText(`Adding: ${termText}`, this.canvas.width/2, 100);
+                }
+
+                // Draw series terms with highlighting in 5 columns
+                this.ctx.font = '12px monospace';
+                this.ctx.textAlign = 'left';
+                const startY = 130;
+                const columnWidth = 120;
+                const rowHeight = 18;
+                const maxRows = 15;
+                const maxTermsToShow = 75; // 5 columns × 15 rows
+
+                for (let i = 0; i < Math.min(this.terms.length, maxTermsToShow); i++) {
+                    const term = this.terms[i];
+                    const n = this.termDenominators[i];
+
+                    const col = Math.floor(i / maxRows);
+                    const row = i % maxRows;
+                    const x = 20 + col * columnWidth;
+                    const y = startY + row * rowHeight;
+
+                    // Highlight the most recent term
+                    if (i === 0) {
+                        this.ctx.fillStyle = 'rgba(255, 255, 0, 0.3)';
+                        this.ctx.fillRect(x - 5, y - 12, columnWidth - 10, rowHeight);
+                    }
+
+                    const color = term > 0 ? '#27ae60' : '#e74c3c';
+                    this.ctx.fillStyle = color;
+                    this.ctx.fillText(`${term > 0 ? '+' : ''}1/${n}`, x, y);
+                }
+            }
+
+            step() {
+                // Add only 1 term per step for better visibility
+                const denominator = 2 * this.iterations + 1;
+                const term = Math.pow(-1, this.iterations) / denominator;
+                this.currentTerm = term;
+                this.sum += term;
+                this.terms.unshift(term); // Add to beginning for highlighting
+                this.termDenominators.unshift(denominator); // Store the denominator
+                if (this.terms.length > 75) { // Keep 75 terms (5 columns × 15 rows)
+                    this.terms.pop();
+                    this.termDenominators.pop();
+                }
+                this.iterations++;
+
+                this.setupCanvas();
+                this.drawPiProgress();
+
+                return this.sum * 4;
+            }
+
+            drawPiProgress() {
+                const currentPi = this.sum * 4;
+                const targetPi = Math.PI;
+
+                // Draw Pi value progression
+                this.ctx.fillStyle = '#2c3e50';
+                this.ctx.font = '24px monospace';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText(`π ≈ ${currentPi.toFixed(8)}`, this.canvas.width/2, 450);
+
+                // Draw target Pi for comparison
+                this.ctx.fillStyle = '#7f8c8d';
+                this.ctx.font = '14px monospace';
+                this.ctx.fillText(`Target: ${targetPi.toFixed(8)}`, this.canvas.width/2, 470);
+
+                // Show convergence with a visual bar
+                const progress = Math.max(0, Math.min(1, 1 - Math.abs(currentPi - targetPi)));
+                const barWidth = 300;
+                const barHeight = 8;
+                const barX = (this.canvas.width - barWidth) / 2;
+                const barY = 480;
+
+                this.ctx.fillStyle = '#ecf0f1';
+                this.ctx.fillRect(barX, barY, barWidth, barHeight);
+
+                this.ctx.fillStyle = '#3498db';
+                this.ctx.fillRect(barX, barY, barWidth * progress, barHeight);
+            }
+
+            reset() {
+                this.iterations = 0;
+                this.sum = 0;
+                this.terms = [];
+                this.termDenominators = [];
+                this.currentTerm = null;
+                this.animationStep = 0;
+                this.setupCanvas();
+            }
+
+            getIterations() {
+                return this.iterations;
+            }
+        }
+
+        class NilakanthaEstimator {
+            constructor(canvas, ctx) {
+                this.canvas = canvas;
+                this.ctx = ctx;
+                this.iterations = 0;
+                this.sum = 3;
+                this.terms = [];
+                this.currentTerm = null;
+                this.setupCanvas();
+            }
+
+            setupCanvas() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                this.drawFormula();
+            }
+
+            drawFormula() {
+                this.ctx.fillStyle = '#333';
+                this.ctx.font = '16px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText('π = 3 + 4/(2×3×4) - 4/(4×5×6) + 4/(6×7×8) - ...', this.canvas.width/2, 40);
+
+                // Draw current running sum prominently
+                this.ctx.fillStyle = '#2c3e50';
+                this.ctx.font = '16px monospace';
+                this.ctx.fillText(`Running sum: ${this.sum.toFixed(8)}`, this.canvas.width/2, 70);
+
+                // Show current term being added
+                if (this.currentTerm !== null) {
+                    const termColor = this.currentTerm > 0 ? '#27ae60' : '#e74c3c';
+                    this.ctx.fillStyle = termColor;
+                    this.ctx.font = '16px monospace';
+                    const n = 2 * this.iterations;
+                    const termText = `${this.currentTerm > 0 ? '+' : ''}4/(${n}×${n+1}×${n+2})`;
+                    this.ctx.fillText(`Adding: ${termText}`, this.canvas.width/2, 100);
+
+                    // Show decimal value
+                    this.ctx.font = '14px monospace';
+                    this.ctx.fillText(`= ${this.currentTerm.toFixed(8)}`, this.canvas.width/2, 120);
+                }
+
+                // Draw recent terms in multiple columns - streaming continuously
+                this.ctx.font = '11px monospace';
+                this.ctx.textAlign = 'left';
+                const startY = 150;
+                const columnWidth = 200;
+                const rowHeight = 20;
+                const maxRows = 12;
+                const maxTermsToShow = 30; // 3 columns × 10 rows for wider terms
+
+                for (let i = 0; i < Math.min(this.terms.length, maxTermsToShow); i++) {
+                    const term = this.terms[i];
+                    // Calculate correct n based on actual iteration when this term was added
+                    const actualIteration = this.iterations - i;
+                    const n = 2 * actualIteration;
+
+                    const col = Math.floor(i / maxRows);
+                    const row = i % maxRows;
+                    const x = 20 + col * columnWidth;
+                    const y = startY + row * rowHeight;
+
+                    // Highlight the most recent term (top-left)
+                    if (i === 0) {
+                        this.ctx.fillStyle = 'rgba(255, 255, 0, 0.3)';
+                        this.ctx.fillRect(x - 5, y - 15, columnWidth - 10, rowHeight);
+                    }
+
+                    const color = term > 0 ? '#27ae60' : '#e74c3c';
+                    this.ctx.fillStyle = color;
+                    this.ctx.fillText(`${term > 0 ? '+' : ''}4/(${n}×${n+1}×${n+2}) = ${term.toFixed(8)}`, x, y);
+                }
+            }
+
+            step() {
+                // Add only 1 term per step for better visibility
+                const n = 2 * (this.iterations + 1);
+                const term = Math.pow(-1, this.iterations) * 4 / (n * (n + 1) * (n + 2));
+                this.currentTerm = term;
+                this.sum += term;
+                this.terms.unshift(term); // Add to beginning for highlighting
+                if (this.terms.length > 30) this.terms.pop();
+                this.iterations++;
+
+                this.setupCanvas();
+                this.drawPiProgress();
+
+                return this.sum;
+            }
+
+            drawPiProgress() {
+                const currentPi = this.sum;
+                const targetPi = Math.PI;
+
+                // Draw Pi value progression
+                this.ctx.fillStyle = '#2c3e50';
+                this.ctx.font = '24px monospace';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText(`π ≈ ${currentPi.toFixed(8)}`, this.canvas.width/2, 450);
+
+                // Draw target Pi for comparison
+                this.ctx.fillStyle = '#7f8c8d';
+                this.ctx.font = '14px monospace';
+                this.ctx.fillText(`Target: ${targetPi.toFixed(8)}`, this.canvas.width/2, 470);
+
+                // Show convergence with a visual bar
+                const progress = Math.max(0, Math.min(1, 1 - Math.abs(currentPi - targetPi)));
+                const barWidth = 300;
+                const barHeight = 8;
+                const barX = (this.canvas.width - barWidth) / 2;
+                const barY = 480;
+
+                this.ctx.fillStyle = '#ecf0f1';
+                this.ctx.fillRect(barX, barY, barWidth, barHeight);
+
+                this.ctx.fillStyle = '#e74c3c';
+                this.ctx.fillRect(barX, barY, barWidth * progress, barHeight);
+            }
+
+            reset() {
+                this.iterations = 0;
+                this.sum = 3;
+                this.terms = [];
+                this.currentTerm = null;
+                this.setupCanvas();
+            }
+
+            getIterations() {
+                return this.iterations;
+            }
+        }
+
+        class BuffonEstimator {
+            constructor(canvas, ctx) {
+                this.canvas = canvas;
+                this.ctx = ctx;
+                this.needles = [];
+                this.crossings = 0;
+                this.totalNeedles = 0;
+                this.lineSpacing = 30;
+                this.needleLength = 20;
+                this.setupCanvas();
+            }
+
+            setupCanvas() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+                // Draw parallel lines
+                this.ctx.strokeStyle = '#333';
+                this.ctx.lineWidth = 2;
+                for (let y = this.lineSpacing; y < this.canvas.height; y += this.lineSpacing) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, y);
+                    this.ctx.lineTo(this.canvas.width, y);
+                    this.ctx.stroke();
+                }
+
+                this.ctx.fillStyle = '#333';
+                this.ctx.font = '14px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText("Buffon's Needle Experiment", this.canvas.width/2, 20);
+            }
+
+            step() {
+                for (let i = 0; i < 3; i++) {
+                    const x = Math.random() * this.canvas.width;
+                    const y = Math.random() * this.canvas.height;
+                    const angle = Math.random() * Math.PI;
+
+                    const x1 = x - (this.needleLength / 2) * Math.cos(angle);
+                    const y1 = y - (this.needleLength / 2) * Math.sin(angle);
+                    const x2 = x + (this.needleLength / 2) * Math.cos(angle);
+                    const y2 = y + (this.needleLength / 2) * Math.sin(angle);
+
+                    // Check if needle crosses a line
+                    const line1 = Math.floor(y1 / this.lineSpacing) * this.lineSpacing;
+                    const line2 = Math.floor(y2 / this.lineSpacing) * this.lineSpacing;
+                    const crosses = line1 !== line2;
+
+                    if (crosses) this.crossings++;
+                    this.totalNeedles++;
+
+                    // Draw needle
+                    this.ctx.strokeStyle = crosses ? '#e74c3c' : '#3498db';
+                    this.ctx.lineWidth = 2;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x1, y1);
+                    this.ctx.lineTo(x2, y2);
+                    this.ctx.stroke();
+                }
+
+                if (this.crossings > 0) {
+                    return (2 * this.needleLength * this.totalNeedles) / (this.lineSpacing * this.crossings);
+                }
+                return 0;
+            }
+
+            reset() {
+                this.needles = [];
+                this.crossings = 0;
+                this.totalNeedles = 0;
+                this.setupCanvas();
+            }
+
+            getIterations() {
+                return this.totalNeedles;
+            }
+        }
+
+        class BaselEstimator {
+            constructor(canvas, ctx) {
+                this.canvas = canvas;
+                this.ctx = ctx;
+                this.iterations = 0;
+                this.sum = 0;
+                this.terms = [];
+                this.currentTerm = null;
+                this.setupCanvas();
+            }
+
+            setupCanvas() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                this.drawFormula();
+            }
+
+            drawFormula() {
+                this.ctx.fillStyle = '#333';
+                this.ctx.font = '16px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText('π²/6 = 1 + 1/4 + 1/9 + 1/16 + 1/25 + ... = Σ(1/n²)', this.canvas.width/2, 40);
+
+                // Draw current running sum prominently
+                this.ctx.fillStyle = '#2c3e50';
+                this.ctx.font = '16px monospace';
+                this.ctx.fillText(`Running sum: ${Math.sqrt(this.sum * 6).toFixed(8)}`, this.canvas.width/2, 70);
+
+                // Show current term being added
+                if (this.currentTerm !== null) {
+                    this.ctx.fillStyle = '#27ae60';
+                    this.ctx.font = '16px monospace';
+                    const n = this.iterations;
+                    this.ctx.fillText(`Adding: 1/${n}² = ${this.currentTerm.toFixed(8)}`, this.canvas.width/2, 100);
+                }
+
+                // Draw recent terms in 5 columns
+                this.ctx.font = '12px monospace';
+                this.ctx.textAlign = 'left';
+                const startY = 130;
+                const columnWidth = 120;
+                const rowHeight = 18;
+                const maxRows = 15;
+                const maxTermsToShow = 75;
+
+                for (let i = 0; i < Math.min(this.terms.length, maxTermsToShow); i++) {
+                    const term = this.terms[i];
+                    // Calculate correct n based on actual iteration when this term was added
+                    const n = this.iterations - i;
+
+                    const col = Math.floor(i / maxRows);
+                    const row = i % maxRows;
+                    const x = 20 + col * columnWidth;
+                    const y = startY + row * rowHeight;
+
+                    // Highlight the most recent term (top-left)
+                    if (i === 0) {
+                        this.ctx.fillStyle = 'rgba(255, 255, 0, 0.3)';
+                        this.ctx.fillRect(x - 5, y - 12, columnWidth - 10, rowHeight);
+                    }
+
+                    this.ctx.fillStyle = '#27ae60';
+                    this.ctx.fillText(`+1/${n}²`, x, y);
+                }
+            }
+
+            step() {
+                // Add only 1 term per step for better visibility
+                const n = this.iterations + 1;
+                const term = 1 / (n * n);
+                this.currentTerm = term;
+                this.sum += term;
+                this.terms.unshift(term); // Add to beginning for highlighting
+                if (this.terms.length > 75) this.terms.pop();
+                this.iterations++;
+
+                this.setupCanvas();
+                this.drawPiProgress();
+
+                return Math.sqrt(this.sum * 6);
+            }
+
+            drawPiProgress() {
+                const currentPi = Math.sqrt(this.sum * 6);
+                const targetPi = Math.PI;
+
+                // Draw Pi value progression
+                this.ctx.fillStyle = '#2c3e50';
+                this.ctx.font = '24px monospace';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText(`π ≈ ${currentPi.toFixed(8)}`, this.canvas.width/2, 450);
+
+                // Draw target Pi for comparison
+                this.ctx.fillStyle = '#7f8c8d';
+                this.ctx.font = '14px monospace';
+                this.ctx.fillText(`Target: ${targetPi.toFixed(8)}`, this.canvas.width/2, 470);
+
+                // Show convergence with a visual bar
+                const progress = Math.max(0, Math.min(1, 1 - Math.abs(currentPi - targetPi)));
+                const barWidth = 300;
+                const barHeight = 8;
+                const barX = (this.canvas.width - barWidth) / 2;
+                const barY = 480;
+
+                this.ctx.fillStyle = '#ecf0f1';
+                this.ctx.fillRect(barX, barY, barWidth, barHeight);
+
+                this.ctx.fillStyle = '#27ae60';
+                this.ctx.fillRect(barX, barY, barWidth * progress, barHeight);
+            }
+
+            reset() {
+                this.iterations = 0;
+                this.sum = 0;
+                this.terms = [];
+                this.currentTerm = null;
+                this.setupCanvas();
+            }
+
+            getIterations() {
+                return this.iterations;
+            }
+        }
+
+        class ArchimedesEstimator {
+            constructor(canvas, ctx) {
+                this.canvas = canvas;
+                this.ctx = ctx;
+                this.sides = 6;
+                this.iteration = 0;
+                this.setupCanvas();
+            }
+
+            setupCanvas() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                this.drawPolygons();
+            }
+
+            drawPolygons() {
+                const centerX = this.canvas.width / 2;
+                const centerY = this.canvas.height / 2;
+                const radius = 180;
+
+                // Draw circle
+                this.ctx.strokeStyle = '#333';
+                this.ctx.lineWidth = 2;
+                this.ctx.beginPath();
+                this.ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+                this.ctx.stroke();
+
+                // Draw inscribed polygon
+                this.ctx.strokeStyle = '#e74c3c';
+                this.ctx.lineWidth = 2;
+                this.ctx.beginPath();
+                for (let i = 0; i <= this.sides; i++) {
+                    const angle = (i * 2 * Math.PI) / this.sides;
+                    const x = centerX + radius * Math.cos(angle);
+                    const y = centerY + radius * Math.sin(angle);
+                    if (i === 0) {
+                        this.ctx.moveTo(x, y);
+                    } else {
+                        this.ctx.lineTo(x, y);
+                    }
+                }
+                this.ctx.stroke();
+
+                // Draw circumscribed polygon
+                const outerRadius = radius / Math.cos(Math.PI / this.sides);
+                this.ctx.strokeStyle = '#3498db';
+                this.ctx.lineWidth = 2;
+                this.ctx.beginPath();
+                for (let i = 0; i <= this.sides; i++) {
+                    const angle = (i * 2 * Math.PI) / this.sides;
+                    const x = centerX + outerRadius * Math.cos(angle);
+                    const y = centerY + outerRadius * Math.sin(angle);
+                    if (i === 0) {
+                        this.ctx.moveTo(x, y);
+                    } else {
+                        this.ctx.lineTo(x, y);
+                    }
+                }
+                this.ctx.stroke();
+
+                // Display information
+                this.ctx.fillStyle = '#333';
+                this.ctx.font = '16px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText(`${this.sides}-sided polygons`, centerX, 40);
+
+                // Calculate perimeters and pi bounds
+                const inscribedPerimeter = this.sides * 2 * Math.sin(Math.PI / this.sides);
+                const circumscribedPerimeter = this.sides * 2 * Math.tan(Math.PI / this.sides);
+
+                this.ctx.font = '14px monospace';
+                this.ctx.fillStyle = '#e74c3c';
+                this.ctx.fillText(`Lower bound: ${(inscribedPerimeter / 2).toFixed(8)}`, centerX, centerY + radius + 20);
+                this.ctx.fillStyle = '#3498db';
+                this.ctx.fillText(`Upper bound: ${(circumscribedPerimeter / 2).toFixed(8)}`, centerX, centerY + radius + 40);
+                this.ctx.fillStyle = '#2c3e50';
+                const average = (inscribedPerimeter + circumscribedPerimeter) / 4; // Divide by 4 = (sum)/2/2
+                this.ctx.fillText(`π ≈ ${average.toFixed(8)}`, centerX, centerY + radius + 60);
+            }
+
+            step() {
+                this.iteration++;
+                if (this.iteration % 30 === 0) { // Increase sides every 30 iterations
+                    this.sides *= 2;
+                    if (this.sides > 12288) this.sides = 6; // Reset after getting very precise
+                }
+
+                this.setupCanvas();
+
+                const inscribedPerimeter = this.sides * 2 * Math.sin(Math.PI / this.sides);
+                const circumscribedPerimeter = this.sides * 2 * Math.tan(Math.PI / this.sides);
+                return (inscribedPerimeter + circumscribedPerimeter) / 4; // Divide by 4 to get π from 2π
+            }
+
+            reset() {
+                this.sides = 6;
+                this.iteration = 0;
+                this.setupCanvas();
+            }
+
+            getIterations() {
+                return this.sides;
+            }
+        }
+
+        class CollidingBlocksEstimator {
+            constructor(canvas, ctx) {
+                this.canvas = canvas;
+                this.ctx = ctx;
+                this.collisions = 0;
+                this.massRatio = 100; // Default 10^2
+                this.block1 = { x: 150, v: 0, mass: 1 };
+                this.block2 = { x: 300, v: -1, mass: this.massRatio };
+                this.wall = { x: 50 };
+                this.timeStep = 0.01;
+                this.animationCounter = 0;
+                this.setupCanvas();
+            }
+
+            setupCanvas() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                this.drawScene();
+            }
+
+            drawScene() {
+                // Draw wall (extends to floor)
+                this.ctx.fillStyle = '#2c3e50';
+                this.ctx.fillRect(this.wall.x - 15, 150, 15, 230);
+
+                // Draw floor
+                this.ctx.fillStyle = '#95a5a6';
+                this.ctx.fillRect(0, 380, this.canvas.width, 20);
+
+                // Draw blocks (bigger)
+                const blockHeight = 80;
+                const blockY = 300;
+
+                // Block 1 (smaller but bigger than before)
+                this.ctx.fillStyle = '#e74c3c';
+                this.ctx.fillRect(this.block1.x, blockY, 40, blockHeight);
+                this.ctx.fillStyle = 'white';
+                this.ctx.font = '14px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText('1', this.block1.x + 20, blockY + 45);
+
+                // Block 2 (larger)
+                const block2Width = Math.min(120, 40 + Math.log10(this.massRatio) * 15);
+                this.ctx.fillStyle = '#3498db';
+                this.ctx.fillRect(this.block2.x - block2Width/2, blockY, block2Width, blockHeight);
+                this.ctx.fillStyle = 'white';
+                this.ctx.fillText(`${this.massRatio}`, this.block2.x, blockY + 45);
+
+                // Display information
+                this.ctx.fillStyle = '#333';
+                this.ctx.font = '18px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText('Colliding Blocks Method', this.canvas.width/2, 40);
+
+                this.ctx.font = '14px monospace';
+                this.ctx.fillText(`Collisions: ${this.collisions}`, this.canvas.width/2, 70);
+                this.ctx.fillText(`Mass ratio: 1:${this.massRatio}`, this.canvas.width/2, 90);
+
+                const piEstimate = this.collisions / Math.sqrt(this.massRatio);
+                this.ctx.fillStyle = '#2c3e50';
+                this.ctx.font = '24px monospace';
+                this.ctx.fillText(`π ≈ ${piEstimate.toFixed(8)}`, this.canvas.width/2, 420);
+
+                // Show velocities
+                this.ctx.font = '12px Arial';
+                this.ctx.fillStyle = '#666';
+                this.ctx.textAlign = 'left';
+                this.ctx.fillText(`v₁: ${this.block1.v.toFixed(3)}`, 20, 120);
+                this.ctx.fillText(`v₂: ${this.block2.v.toFixed(3)}`, 20, 140);
+            }
+
+            step() {
+                // Simulate physics for several time steps per animation frame
+                // Use higher multiplier for faster physics
+                const physicsSteps = animationSpeed * 3;
+                for (let i = 0; i < physicsSteps; i++) {
+                    // Update positions
+                    this.block1.x += this.block1.v * this.timeStep;
+                    this.block2.x += this.block2.v * this.timeStep;
+
+                    // Check for collision between blocks (updated for larger blocks)
+                    if (this.block1.x + 40 >= this.block2.x - 60 && this.block1.v > this.block2.v) {
+                        // Elastic collision between blocks
+                        const v1 = this.block1.v;
+                        const v2 = this.block2.v;
+                        const m1 = this.block1.mass;
+                        const m2 = this.block2.mass;
+
+                        this.block1.v = ((m1 - m2) * v1 + 2 * m2 * v2) / (m1 + m2);
+                        this.block2.v = ((m2 - m1) * v2 + 2 * m1 * v1) / (m1 + m2);
+
+                        this.collisions++;
+                    }
+
+                    // Check for collision with wall
+                    if (this.block1.x <= this.wall.x + 15 && this.block1.v < 0) {
+                        this.block1.v = -this.block1.v;
+                        this.collisions++;
+                    }
+
+                    // Stop if both blocks are moving right and well separated, or block2 reaches edge
+                    if ((this.block1.v > 0 && this.block2.v > 0 && this.block2.v >= this.block1.v &&
+                         this.block2.x - this.block1.x > 200) ||
+                        this.block2.x > this.canvas.width - 30) {
+                        // Reset simulation after a delay to show final result
+                        setTimeout(() => {
+                            if (currentEstimator === this) {
+                                this.block1 = { x: 150, v: 0, mass: 1 };
+                                this.block2 = { x: 300, v: -1, mass: this.massRatio };
+                                this.collisions = 0;
+                            }
+                        }, 2000);
+                        break;
+                    }
+                }
+
+                this.setupCanvas();
+                return this.collisions / Math.sqrt(this.massRatio);
+            }
+
+            reset() {
+                this.collisions = 0;
+                this.block1 = { x: 150, v: 0, mass: 1 };
+                this.block2 = { x: 300, v: -1, mass: this.massRatio };
+                this.setupCanvas();
+            }
+
+            setMassRatio(ratio) {
+                this.massRatio = ratio;
+                this.block2.mass = ratio;
+                this.reset();
+            }
+
+            getIterations() {
+                return this.collisions;
+            }
+        }
+
+        // Initialize methods object after class definitions
+        methods = {
+            'monte-carlo': {
+                name: 'Monte Carlo Method',
+                description: 'Estimates $\\pi$ by randomly placing points in a square and counting how many fall inside an inscribed circle. The ratio approaches $\\pi/4$.',
+                estimator: MonteCarloEstimator
+            },
+            'leibniz': {
+                name: 'Leibniz Series',
+                description: 'Uses the infinite series $\\frac{\\pi}{4} = 1 - \\frac{1}{3} + \\frac{1}{5} - \\frac{1}{7} + \\frac{1}{9} - \\ldots$ to estimate $\\pi$. Converges slowly but steadily.',
+                estimator: LeibnizEstimator
+            },
+            'nilakantha': {
+                name: 'Nilakantha Series',
+                description: 'Uses the series $\\pi = 3 + \\frac{4}{2 \\times 3 \\times 4} - \\frac{4}{4 \\times 5 \\times 6} + \\frac{4}{6 \\times 7 \\times 8} - \\ldots$ which converges faster than Leibniz.',
+                estimator: NilakanthaEstimator
+            },
+            'buffon': {
+                name: "Buffon's Needle",
+                description: 'Estimates $\\pi$ by dropping needles on a lined surface. The probability of crossing a line relates to $\\pi$.',
+                estimator: BuffonEstimator
+            },
+            'basel': {
+                name: 'Basel Problem',
+                description: 'Uses the infinite series $\\frac{\\pi^2}{6} = 1 + \\frac{1}{4} + \\frac{1}{9} + \\frac{1}{16} + \\frac{1}{25} + \\ldots = \\sum_{n=1}^{\\infty} \\frac{1}{n^2}$ solved by Euler.',
+                estimator: BaselEstimator
+            },
+            'archimedes': {
+                name: 'Archimedes Polygons',
+                description: 'Uses inscribed and circumscribed polygons around a circle to squeeze $\\pi$ between upper and lower bounds.',
+                estimator: ArchimedesEstimator
+            },
+            'colliding-blocks': {
+                name: 'Colliding Blocks',
+                description: 'Uses conservation of momentum in elastic collisions between blocks of different masses to compute $\\pi$ digits.',
+                estimator: CollidingBlocksEstimator
+            }
+        };
+
+        // Event listeners
+        document.querySelectorAll('.method-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentMethod = btn.dataset.method;
+                switchMethod();
+            });
+        });
+
+        document.getElementById('startBtn').addEventListener('click', () => {
+            isRunning = true;
+            animate();
+        });
+
+        document.getElementById('pauseBtn').addEventListener('click', () => {
+            isRunning = false;
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+        });
+
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            isRunning = false;
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+            if (currentEstimator) {
+                currentEstimator.reset();
+            }
+            updateDisplay(0, 0);
+        });
+
+        // Speed slider control
+        const speedSlider = document.getElementById('speedSlider');
+        const speedValue = document.getElementById('speedValue');
+
+        speedSlider.addEventListener('input', (e) => {
+            animationSpeed = parseInt(e.target.value);
+            speedValue.textContent = animationSpeed + 'x';
+        });
+
+        // Mass slider control
+        const massSlider = document.getElementById('massSlider');
+        const massValue = document.getElementById('massValue');
+
+        massSlider.addEventListener('input', (e) => {
+            const power = parseInt(e.target.value);
+            const ratio = Math.pow(10, power);
+            massValue.textContent = ratio;
+            if (currentEstimator && currentEstimator.setMassRatio) {
+                currentEstimator.setMassRatio(ratio);
+            }
+        });
+
+        function switchMethod() {
+            isRunning = false;
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+
+            // Show/hide mass control based on method
+            const massControl = document.getElementById('massControl');
+            if (currentMethod === 'colliding-blocks') {
+                massControl.style.display = 'block';
+            } else {
+                massControl.style.display = 'none';
+            }
+
+            const method = methods[currentMethod];
+            methodDescription.innerHTML = method.description;
+            // Render KaTeX in the description
+            setTimeout(() => {
+                if (window.renderMathInElement) {
+                    renderMathInElement(methodDescription, {
+                        delimiters: [
+                            {left: "$$", right: "$$", display: true},
+                            {left: "$", right: "$", display: false},
+                            {left: "\\(", right: "\\)", display: false},
+                            {left: "\\[", right: "\\]", display: true}
+                        ]
+                    });
+                }
+            }, 50);
+            currentEstimator = new method.estimator(canvas, ctx);
+            updateDisplay(0, 0);
+        }
+
+        function animate() {
+            if (!isRunning || !currentEstimator) return;
+
+            const piEstimate = currentEstimator.step();
+            const iterations = currentEstimator.getIterations();
+
+            updateDisplay(piEstimate, iterations);
+
+            // Use speed slider to control animation delay
+            const delay = Math.max(10, baseDelay / animationSpeed);
+
+            animationId = requestAnimationFrame(() => {
+                setTimeout(animate, delay);
+            });
+        }
+
+        function updateDisplay(piEstimate, iterations) {
+            piDisplay.textContent = `π ≈ ${piEstimate.toFixed(8)}`;
+            iterationsDisplay.textContent = iterations.toLocaleString();
+
+            const error = Math.abs(piEstimate - Math.PI) / Math.PI * 100;
+            errorDisplay.textContent = `${error.toFixed(3)}%`;
+
+            if (error < 1) {
+                piDisplay.classList.add('pulsing');
+            } else {
+                piDisplay.classList.remove('pulsing');
+            }
+        }
+
+        // Initialize KaTeX and then switch method
+        document.addEventListener('DOMContentLoaded', function() {
+            // Wait for KaTeX to fully load
+            setTimeout(() => {
+                switchMethod();
+            }, 200);
+        });
+    </script>
+</body>
+</html>
