@@ -70,7 +70,7 @@
         canvas {
             flex: 1;
             width: 100%;
-            max-width: 650px;
+            max-width: 500px;
             height: 500px;
             background: white;
             border-radius: 10px;
@@ -240,7 +240,7 @@
         </div>
 
         <div class="visualization-area">
-            <canvas id="piCanvas" width="650" height="500"></canvas>
+            <canvas id="piCanvas" width="500" height="500"></canvas>
 
             <div class="info-panel">
                 <div class="method-description" id="methodDescription">
@@ -311,8 +311,9 @@
             setupCanvas() {
                 this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-                // Calculate centered dimensions
-                const size = 450; // Much bigger for 650x500 canvas
+                // Calculate centered dimensions - ensure square aspect ratio
+                const maxSize = Math.min(this.canvas.width, this.canvas.height) * 0.85;
+                const size = maxSize;
                 const centerX = this.canvas.width / 2;
                 const centerY = this.canvas.height / 2;
                 const squareX = centerX - size / 2;
@@ -856,7 +857,7 @@
             drawPolygons() {
                 const centerX = this.canvas.width / 2;
                 const centerY = this.canvas.height / 2;
-                const radius = 180;
+                const radius = Math.min(this.canvas.width, this.canvas.height) * 0.35;
 
                 // Draw circle
                 this.ctx.strokeStyle = '#333';
