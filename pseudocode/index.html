@@ -672,6 +672,7 @@
                     <option value="functions">Functions</option>
                     <option value="methods">Methods</option>
                     <option value="steps">FOR Loops with Steps</option>
+                    <option value="factors">Factors</option>
                     <option value="bisection">Bisection Method</option>
                     <option value="newton">Newton's Method</option>
                 </select>
@@ -789,6 +790,7 @@ Click line numbers to set breakpoints!"></textarea>
                         <option value="functions">Functions</option>
                         <option value="methods">Methods</option>
                         <option value="steps">FOR Loops with Steps</option>
+                        <option value="factors">Factors</option>
                         <option value="bisection">Bisection Method</option>
                         <option value="newton">Newton's Method</option>
                     </select>
@@ -1004,6 +1006,7 @@ Click line numbers to set breakpoints!"></textarea>
                     functions: 'FUNCTION square(x)\n    result ← x * x\n    RETURN result\nEND FUNCTION\n\nFUNCTION add(a, b)\n    RETURN a + b\nEND FUNCTION\n\nBEGIN\n    num ← 5\n    sq ← square(num)\n    doubled ← add(sq, sq)\n    PRINT "Square of " + num + " is " + sq\n    PRINT "Double the square is " + doubled\nEND',
                     methods: 'METHOD printGreeting(name)\n    PRINT "Hello, " + name + "!"\nEND METHOD\n\nMETHOD showInfo(value, label)\n    PRINT label + ": " + value\nEND METHOD\n\nBEGIN\n    username ← "Alice"\n    age ← 25\n    printGreeting(username)\n    showInfo(age, "Age")\n    showInfo(username, "Name")\nEND',
                     steps: 'BEGIN\n    PRINT "Odd numbers from 1 to 10:"\n    FOR i ← 1 TO 10 STEP 2 DO\n        PRINT i\n    END FOR\n    \n    PRINT "Countdown from 10 to 0:"\n    FOR i ← 10 TO 0 STEP -1 DO\n        PRINT i\n    END FOR\n    \n    PRINT "Multiples of 3 from 0 to 15:"\n    FOR i ← 0 TO 15 STEP 3 DO\n        PRINT i\n    END FOR\nEND',
+                    factors: 'FUNCTION sqrt(x)\n    result ← x ^ 0.5\n    RETURN result\nEND FUNCTION\n\nFUNCTION factors(n)\n    facts ← []\n    limit ← sqrt(n)\n    factorCount ← 0\n    FOR i ← 1 TO limit DO\n        IF n % i = 0 THEN\n            div ← n / i\n            facts[factorCount] ← i\n            factorCount ← factorCount + 1\n            IF i ≠ div THEN\n                facts[factorCount] ← div\n                factorCount ← factorCount + 1\n            END IF\n        END IF\n    END FOR\n    RETURN facts\nEND FUNCTION\n\nBEGIN\n    n ← 96\n    PRINT "Finding factors of " + n\n    result ← factors(n)\n    PRINT "Factors: " + result\nEND',
                     bisection: 'FUNCTION f(x)\n    result ← x ^ 2 - x - 1\n    RETURN result\nEND FUNCTION\n\nFUNCTION abs(x)\n    IF x < 0 THEN\n        RETURN -x\n    END IF\n    RETURN x\nEND FUNCTION\n\nBEGIN\n    PRINT "Bisection Method: Find root of x^2 - x - 1"\n    a ← 1\n    b ← 2\n    tolerance ← 0.01\n    iteration ← 0\n    \n    PRINT "Initial interval: [" + a + ", " + b + "]"\n    \n    WHILE abs(b - a) > tolerance DO\n        iteration ← iteration + 1\n        c ← (a + b) / 2\n        fc ← f(c)\n        fa ← f(a)\n        \n        PRINT "Iteration " + iteration + ": c = " + c + ", fc = " + fc\n        \n        IF fa * fc < 0 THEN\n            b ← c\n        ELSE\n            a ← c\n        END IF\n        \n        PRINT "New interval: [" + a + ", " + b + "]"\n    END WHILE\n    \n    root ← (a + b) / 2\n    rootValue ← f(root)\n    PRINT "Root found: " + root\n    PRINT "Verification: rootValue = " + rootValue\nEND',
                     newton: 'FUNCTION f(x)\n    result ← x ^ 2 - x - 1\n    RETURN result\nEND FUNCTION\n\nFUNCTION fprime(x)\n    result ← 2 * x - 1\n    RETURN result\nEND FUNCTION\n\nFUNCTION abs(x)\n    IF x < 0 THEN\n        result ← -x\n    ELSE\n        result ← x\n    END IF\n    RETURN result\nEND FUNCTION\n\nBEGIN\n    PRINT "Newton\'s Method: Find root of x^2 - x - 1"\n    x0 ← 1.5\n    tolerance ← 0.01\n    iteration ← 0\n    maxIterations ← 20\n    converged ← 0\n    \n    PRINT "Starting point: x0 = " + x0\n    \n    WHILE iteration < maxIterations AND converged = 0 DO\n        fx ← f(x0)\n        fpx ← fprime(x0)\n        \n        PRINT "Iteration " + iteration + ": x = " + x0 + ", fx = " + fx\n        \n        absFx ← abs(fx)\n        IF absFx < tolerance THEN\n            PRINT "Root found with desired accuracy!"\n            PRINT "Final result: x = " + x0\n            PRINT "Verification: fx = " + fx\n            converged ← 1\n        ELSE\n            IF fpx = 0 THEN\n                PRINT "Error: Derivative is zero, cannot continue"\n                converged ← 1\n            ELSE\n                x1 ← x0 - fx / fpx\n                diff ← abs(x1 - x0)\n                \n                IF diff < tolerance THEN\n                    PRINT "Convergence achieved!"\n                    finalValue ← f(x1)\n                    PRINT "Final result: x = " + x1\n                    PRINT "Verification: finalValue = " + finalValue\n                    converged ← 1\n                ELSE\n                    x0 ← x1\n                    iteration ← iteration + 1\n                END IF\n            END IF\n        END IF\n    END WHILE\n    \n    IF converged = 0 THEN\n        PRINT "Maximum iterations reached"\n        PRINT "Final approximation: x = " + x0\n    END IF\nEND'
                 };
@@ -1402,7 +1405,33 @@ Click line numbers to set breakpoints!"></textarea>
             }
 
             updateVariable(name, value, highlight = true) {
-                this.variables[name] = value;
+                // Check if this is an array assignment (e.g., "arr[index]")
+                const arrayMatch = name.match(/^(\w+)\[(.+)\]$/);
+                if (arrayMatch) {
+                    const arrayName = arrayMatch[1];
+                    const indexExpr = arrayMatch[2];
+                    const index = this.evaluateExpression(indexExpr);
+
+                    // Initialize array if it doesn't exist
+                    if (!this.variables[arrayName]) {
+                        this.variables[arrayName] = [];
+                    }
+
+                    // Ensure the array is large enough
+                    if (!Array.isArray(this.variables[arrayName])) {
+                        this.variables[arrayName] = [];
+                    }
+
+                    // Set the array element
+                    this.variables[arrayName][index] = value;
+
+                    // Use the array name for highlighting
+                    name = arrayName;
+                } else {
+                    // Regular variable assignment
+                    this.variables[name] = value;
+                }
+
                 this.renderVariables();
                 if (highlight) {
                     const varItem = document.querySelector(`[data-var="${name}"]`);
@@ -1740,7 +1769,7 @@ Click line numbers to set breakpoints!"></textarea>
 
             evaluateCondition(condition) {
                 condition = condition.trim();
-                condition = condition.replace(/≥/g, '>=').replace(/≤/g, '<=');
+                condition = condition.replace(/≥/g, '>=').replace(/≤/g, '<=').replace(/≠/g, '!=');
                 
                 // Handle parentheses recursively
                 while (condition.includes('(')) {
@@ -1777,7 +1806,7 @@ Click line numbers to set breakpoints!"></textarea>
                 if (condition === 'FALSE') return false;
                 
                 // Handle simple comparisons with proper parentheses handling
-                const operators = ['>=', '<=', '>', '<', '='];
+                const operators = ['>=', '<=', '!=', '>', '<', '='];
                 for (const op of operators) {
                     const opIndex = this.findOperatorIndex(condition, op);
                     if (opIndex !== -1) {
@@ -1790,6 +1819,7 @@ Click line numbers to set breakpoints!"></textarea>
                         switch (op) {
                             case '>=': return leftVal >= rightVal;
                             case '<=': return leftVal <= rightVal;
+                            case '!=': return leftVal != rightVal;
                             case '>': return leftVal > rightVal;
                             case '<': return leftVal < rightVal;
                             case '=': return leftVal == rightVal;
