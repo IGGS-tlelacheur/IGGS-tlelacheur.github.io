@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mathematical Pseudocode Animator</title>
+    <title>Maths Pseudocode Animator</title>
     <style>
         * {
             margin: 0;
@@ -21,12 +21,14 @@
         }
 
         .container {
-            max-width: 1400px;
-            margin: 0 auto;
+            display: flex;
+            height: 100vh;
+            max-width: none;
+            margin: 0;
             background: white;
-            border-radius: 15px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            overflow: visible;
+            border-radius: 0;
+            box-shadow: none;
+            overflow: hidden;
         }
 
         .header {
@@ -42,65 +44,62 @@
         }
 
         .controls {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
             margin: 20px 0;
-            flex-wrap: wrap;
         }
 
         .speed-control {
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 20px;
+            gap: 10px;
             margin: 15px 0;
-            padding: 20px;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 12px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
             backdrop-filter: blur(10px);
-            border: 2px solid rgba(52, 152, 219, 0.3);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .speed-control label {
-            color: #2c3e50;
+            color: white;
             font-weight: bold;
-            font-size: 16px;
+            font-size: 14px;
+            text-align: center;
         }
 
-        .speed-slider {
-            width: 250px;
-            height: 8px;
-            border-radius: 4px;
-            background: linear-gradient(to right, #e74c3c, #f39c12, #2ecc71);
+        .speed-select {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
             outline: none;
-            cursor: pointer;
-            appearance: none;
-        }
-
-        .speed-slider::-webkit-slider-thumb {
-            appearance: none;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #3498db, #2980b9);
-            cursor: pointer;
-            box-shadow: 0 3px 8px rgba(0,0,0,0.3);
             transition: all 0.3s ease;
-            border: 3px solid white;
         }
 
-        .speed-slider::-webkit-slider-thumb:hover {
-            background: linear-gradient(135deg, #2980b9, #3498db);
-            transform: scale(1.2);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+        .speed-select:focus {
+            border-color: #3498db;
+            background: white;
+            box-shadow: 0 0 10px rgba(52, 152, 219, 0.3);
+        }
+
+        .speed-select:hover {
+            background: white;
+            border-color: rgba(255, 255, 255, 0.5);
         }
 
         #speedLabel {
             color: white;
             font-weight: bold;
-            font-size: 16px;
+            font-size: 14px;
+            text-align: center;
             min-width: 90px;
             text-align: center;
             padding: 10px 18px;
@@ -109,20 +108,77 @@
             box-shadow: 0 3px 10px rgba(116, 185, 255, 0.3);
         }
 
-        .content {
-            display: grid;
-            grid-template-columns: 2fr 2fr 1fr;
-            gap: 20px;
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
             padding: 20px;
-            min-height: 600px;
-            box-sizing: border-box;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        .main-content {
+            display: flex;
+            flex: 1;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .left-panel {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #dee2e6;
+        }
+
+        .right-panel {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .content {
+            display: none; /* Hide old content structure */
         }
 
         .input-panel, .pseudocode-panel, .variables-panel {
             background: #f8f9fa;
-            border-radius: 10px;
+            border-radius: 0;
+            border: none;
             padding: 20px;
-            border: 2px solid #e9ecef;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            margin: 0;
+        }
+
+        .input-panel {
+            flex: 1;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .variables-panel {
+            height: 300px;
+            border-top: 1px solid #dee2e6;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .pseudocode-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .output-panel {
+            height: 250px;
+            background: #2c3e50;
+            border-top: 1px solid #dee2e6;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
 
         .panel-title {
@@ -133,6 +189,43 @@
             text-align: center;
             border-bottom: 2px solid #3498db;
             padding-bottom: 10px;
+        }
+
+        .panel-title-fixed {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #2c3e50;
+            text-align: center;
+            border-bottom: 2px solid #3498db;
+            padding: 15px 20px 10px 20px;
+            background: #f8f9fa;
+            flex-shrink: 0;
+            margin: 0;
+        }
+
+        .output-panel .panel-title-fixed {
+            background: #34495e;
+            color: #ecf0f1;
+            border-bottom-color: #3498db;
+        }
+
+        .panel-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+
+        .output-panel .panel-content {
+            background: #2c3e50;
+            color: #ecf0f1;
+            font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .variables-content {
+            background: #f8f9fa;
         }
 
         .code-input {
@@ -184,9 +277,10 @@
             background: #1e1e1e;
             border-radius: 8px;
             padding: 0;
-            max-height: 400px;
+            flex: 1;
             overflow-y: auto;
             border: 2px solid #333;
+            min-height: 0;
         }
 
         .pseudocode-line {
@@ -550,39 +644,67 @@
                 gap: 10px;
             }
 
-            .speed-slider {
-                width: 200px;
+            .speed-select {
+                width: 150px;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>Mathematical Pseudocode Animator</h1>
-            <p>Write mathematically correct pseudocode and watch it execute step by step</p>
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="header">
+                <h1>Maths Pseudocode Animator</h1>
+                <p>Write mathematically correct pseudocode and watch it execute step by step</p>
+            </div>
+
+            <div class="examples">
+                <label for="exampleSelect" style="font-weight: bold; margin-right: 8px; color: white;">Quick Examples:</label>
+                <select id="exampleSelect" class="example-dropdown">
+                    <option value="">-- Select an example --</option>
+                    <option value="simple">Simple Calculation</option>
+                    <option value="power">Powers & Exponents</option>
+                    <option value="loop">While Loop</option>
+                    <option value="factorial">Factorial</option>
+                    <option value="squares">Square Numbers</option>
+                    <option value="logical">Logical Operators (AND/OR)</option>
+                    <option value="functions">Functions</option>
+                    <option value="methods">Methods</option>
+                    <option value="steps">FOR Loops with Steps</option>
+                    <option value="bisection">Bisection Method</option>
+                    <option value="newton">Newton's Method</option>
+                </select>
+            </div>
+
+            <div class="controls">
+                <button class="btn btn-primary" id="startBtn" disabled>Parse & Start</button>
+                <button class="btn btn-primary" id="nextBtn" disabled>Next Step</button>
+                <button class="btn btn-warning" id="prevBtn" disabled>Step Back</button>
+                <button class="btn btn-primary" id="autoBtn" disabled>Auto Run</button>
+                <button class="btn btn-secondary" id="resetBtn">Reset</button>
+                <button class="btn btn-info" id="helpBtn">📖 Help & Keywords</button>
+            </div>
+
+            <div class="speed-control">
+                <label for="speedSelect">Auto Run Speed:</label>
+                <select id="speedSelect" class="speed-select">
+                    <option value="1">Very Slow</option>
+                    <option value="3">Slow</option>
+                    <option value="5" selected>Normal</option>
+                    <option value="7">Fast</option>
+                    <option value="9">Very Fast</option>
+                </select>
+            </div>
         </div>
 
-        <div class="controls">
-            <button class="btn btn-success" id="parseBtn">Parse Code</button>
-            <button class="btn btn-primary" id="startBtn" disabled>Start</button>
-            <button class="btn btn-primary" id="nextBtn" disabled>Next Step</button>
-            <button class="btn btn-warning" id="prevBtn" disabled>Step Back</button>
-            <button class="btn btn-primary" id="autoBtn" disabled>Auto Run</button>
-            <button class="btn btn-secondary" id="resetBtn">Reset</button>
-            <button class="btn btn-info" id="helpBtn">📖 Help & Keywords</button>
-        </div>
-
-        <div class="speed-control">
-            <label for="speedSlider">Auto Run Speed:</label>
-            <input type="range" id="speedSlider" min="1" max="10" value="5" class="speed-slider">
-            <span id="speedLabel">Normal</span>
-        </div>
-
-        <div class="content">
-            <div class="input-panel">
-                <div class="panel-title">Write Your Pseudocode</div>
-                <textarea id="codeInput" class="code-input" placeholder="Enter your pseudocode here...
+        <!-- Main Content Area -->
+        <div class="main-content">
+            <!-- Left Panel: Input Panel (top) + Variables Panel (bottom) -->
+            <div class="left-panel">
+                <div class="input-panel">
+                    <div class="panel-title">Write Your Pseudocode</div>
+                    <textarea id="codeInput" class="code-input" placeholder="Enter your pseudocode here...
 
 Example with new structure:
 BEGIN
@@ -611,8 +733,49 @@ Boolean logic:
 
 Use ← for assignment, = for equality, ^ for powers
 Click line numbers to set breakpoints!"></textarea>
+                    <div id="validationMessage" class="validation-message"></div>
+
+                    <div class="help-text">
+                        <strong>Instructions:</strong> Click line numbers to set breakpoints. Use Step Back to undo steps.
+                        Syntax highlighting shows different code elements in color.
+                    </div>
+                </div>
+
+                <div class="output-panel">
+                    <div class="panel-title-fixed">Output</div>
+                    <div class="panel-content" id="output"></div>
+                </div>
+
+                <div class="variables-panel">
+                    <div class="panel-title-fixed">Variables</div>
+                    <div class="panel-content variables-content" id="variables"></div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Pseudocode Panel -->
+            <div class="right-panel">
+                <div class="pseudocode-panel">
+                    <div class="panel-title">Processed Code</div>
+                    <div class="pseudocode-container" id="pseudocode"></div>
+
+                    <div class="debug-info">
+                        <div class="step-info">
+                            <span>Step: <span id="stepCounter">0</span></span>
+                            <span>Breakpoints: <span id="breakpointCount">0</span></span>
+                        </div>
+                        <div>Status: <span id="executionStatus">Ready</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hidden old content structure for compatibility -->
+        <div class="content">
+            <div class="input-panel">
+                <div class="panel-title">Write Your Pseudocode</div>
+                <textarea id="codeInput" class="code-input"></textarea>
                 <div id="validationMessage" class="validation-message"></div>
-                
+
                 <div class="examples">
                     <label for="exampleSelect" style="font-weight: bold; margin-right: 8px; color: #2c3e50;">Quick Examples:</label>
                     <select id="exampleSelect" class="example-dropdown">
@@ -630,9 +793,9 @@ Click line numbers to set breakpoints!"></textarea>
                         <option value="newton">Newton's Method</option>
                     </select>
                 </div>
-                
+
                 <div class="help-text">
-                    <strong>Instructions:</strong> Click line numbers to set breakpoints. Use Step Back to undo steps. 
+                    <strong>Instructions:</strong> Click line numbers to set breakpoints. Use Step Back to undo steps.
                     Syntax highlighting shows different code elements in color.
                 </div>
             </div>
@@ -640,7 +803,7 @@ Click line numbers to set breakpoints!"></textarea>
             <div class="pseudocode-panel">
                 <div class="panel-title">Processed Code</div>
                 <div class="pseudocode-container" id="pseudocode"></div>
-                
+
                 <div class="debug-info">
                     <div class="step-info">
                         <span>Step: <span id="stepCounter">0</span></span>
@@ -648,7 +811,7 @@ Click line numbers to set breakpoints!"></textarea>
                     </div>
                     <div>Status: <span id="executionStatus">Ready</span></div>
                 </div>
-                
+
                 <div class="output">
                     <div class="output-title">Output:</div>
                     <div id="output"></div>
@@ -666,60 +829,132 @@ Click line numbers to set breakpoints!"></textarea>
             <div class="modal-content">
                 <div class="modal-header">
                     <span class="close">&times;</span>
-                    <h2>Mathematical Pseudocode Syntax Guide</h2>
+                    <h2>Maths Pseudocode Animator - User Guide</h2>
                 </div>
 
                 <div class="keyword-section">
-                    <h3>New Features</h3>
-                    
+                    <h3>Getting Started</h3>
+
                     <div class="keyword-item">
-                        <div class="keyword-syntax">Boolean Logic (AND/OR)</div>
-                        <div class="keyword-description">Combine multiple conditions using AND and OR operators. Use parentheses for grouping.</div>
-                        <div class="keyword-example">IF x > 5 AND y < 10 THEN<br>IF a = 1 OR b = 2 THEN<br>IF (x > 0 AND y > 0) OR z = 0 THEN</div>
-                    </div>
-                    
-                    <div class="keyword-item">
-                        <div class="keyword-syntax">Breakpoints</div>
-                        <div class="keyword-description">Click on line numbers to set/remove breakpoints. Execution will pause BEFORE executing the breakpoint line.</div>
-                        <div class="keyword-example">Click the gray line number → Red dot appears → Execution pauses before that line</div>
+                        <div class="keyword-syntax">Basic Usage</div>
+                        <div class="keyword-description">Write your pseudocode in the editor, then click "Parse & Start" to begin execution. Use the Examples dropdown for pre-built algorithms.</div>
+                        <div class="keyword-example">1. Select example or write code<br>2. Click "Parse & Start"<br>3. Use "Next Step" to execute line by line</div>
                     </div>
 
                     <div class="keyword-item">
-                        <div class="keyword-syntax">Step Back</div>
-                        <div class="keyword-description">Undo the last execution step to review what happened.</div>
-                        <div class="keyword-example">Use "Step Back" button to reverse the last operation</div>
-                    </div>
-
-                    <div class="keyword-item">
-                        <div class="keyword-syntax">Syntax Highlighting</div>
-                        <div class="keyword-description">Different parts of code are colored: keywords (blue), strings (orange), numbers (green), operators (yellow).</div>
-                        <div class="keyword-example">IF (blue) x (cyan) ← (white) 5 (green) THEN (blue)</div>
+                        <div class="keyword-syntax">Code Structure</div>
+                        <div class="keyword-description">All programs start with BEGIN and end with END. Functions and methods are defined before the main program.</div>
+                        <div class="keyword-example">FUNCTION name(params)<br>&nbsp;&nbsp;&nbsp;&nbsp;statements<br>END FUNCTION<br><br>BEGIN<br>&nbsp;&nbsp;&nbsp;&nbsp;main program<br>END</div>
                     </div>
                 </div>
 
                 <div class="keyword-section">
-                    <h3>Mathematical Operators</h3>
-                    
+                    <h3>Control Flow</h3>
+
                     <div class="keyword-item">
-                        <div class="keyword-syntax">Assignment vs Equality vs Power</div>
-                        <div class="keyword-description">← for assignment, = for equality testing, ^ for exponentiation</div>
-                        <div class="keyword-example">x ← 5 (assignment)<br>IF x = 5 THEN (equality)<br>area ← x ^ 2 (power)</div>
+                        <div class="keyword-syntax">IF/ELSE Statements</div>
+                        <div class="keyword-description">Conditional execution with support for boolean logic (AND, OR) and nested conditions. Use parentheses for complex logic.</div>
+                        <div class="keyword-example">IF x > 5 THEN<br>&nbsp;&nbsp;&nbsp;&nbsp;PRINT "Greater"<br>ELSE<br>&nbsp;&nbsp;&nbsp;&nbsp;PRINT "Smaller"<br>END IF<br><br>IF x > 5 AND y < 10 THEN<br>IF (a = 1 OR b = 2) AND c > 0 THEN</div>
+                    </div>
+
+                    <div class="keyword-item">
+                        <div class="keyword-syntax">WHILE Loops</div>
+                        <div class="keyword-description">Repeat statements while a condition is true. Useful for iterative algorithms and convergence.</div>
+                        <div class="keyword-example">WHILE count < 10 DO<br>&nbsp;&nbsp;&nbsp;&nbsp;count ← count + 1<br>&nbsp;&nbsp;&nbsp;&nbsp;PRINT count<br>END WHILE</div>
+                    </div>
+
+                    <div class="keyword-item">
+                        <div class="keyword-syntax">FOR Loops with STEP</div>
+                        <div class="keyword-description">Count from start to end with optional step size. Use negative step to count backwards. Perfect for sequences and iterations.</div>
+                        <div class="keyword-example">FOR i ← 1 TO 10 STEP 2 DO<br>&nbsp;&nbsp;&nbsp;&nbsp;PRINT i<br>END FOR<br><br>FOR i ← 10 TO 1 STEP -1 DO<br>&nbsp;&nbsp;&nbsp;&nbsp;PRINT "Countdown: " + i<br>END FOR</div>
+                    </div>
+                </div>
+
+                <div class="keyword-section">
+                    <h3>Functions & Methods</h3>
+
+                    <div class="keyword-item">
+                        <div class="keyword-syntax">Functions</div>
+                        <div class="keyword-description">Functions return values using RETURN statement. They can accept parameters and perform calculations.</div>
+                        <div class="keyword-example">FUNCTION square(x)<br>&nbsp;&nbsp;&nbsp;&nbsp;result ← x * x<br>&nbsp;&nbsp;&nbsp;&nbsp;RETURN result<br>END FUNCTION<br><br>area ← square(5)</div>
+                    </div>
+
+                    <div class="keyword-item">
+                        <div class="keyword-syntax">Methods</div>
+                        <div class="keyword-description">Methods perform actions without returning values. They can output results or modify global state.</div>
+                        <div class="keyword-example">METHOD printInfo(name, age)<br>&nbsp;&nbsp;&nbsp;&nbsp;PRINT "Name: " + name<br>&nbsp;&nbsp;&nbsp;&nbsp;PRINT "Age: " + age<br>END METHOD<br><br>printInfo("Alice", 25)</div>
+                    </div>
+                </div>
+
+                <div class="keyword-section">
+                    <h3>Mathematical Operations</h3>
+
+                    <div class="keyword-item">
+                        <div class="keyword-syntax">Assignment vs Equality</div>
+                        <div class="keyword-description">Use ← for assignment (storing values) and = for equality testing (comparisons in conditions).</div>
+                        <div class="keyword-example">x ← 5 (assigns 5 to x)<br>IF x = 5 THEN (tests if x equals 5)<br>y ← x + 3 (assigns x+3 to y)</div>
                     </div>
 
                     <div class="keyword-item">
                         <div class="keyword-syntax">Arithmetic Operators</div>
-                        <div class="keyword-description">+ (add), - (subtract), * (multiply), / (divide), ^ (power)</div>
-                        <div class="keyword-example">result ← 2 + 3 * 4<br>area ← pi * radius ^ 2<br>compound ← principal * (1 + rate) ^ years</div>
+                        <div class="keyword-description">Standard mathematical operations with proper precedence. Use ^ for exponentiation.</div>
+                        <div class="keyword-example">Basic: + - * /<br>Power: x ^ 2 (x squared)<br>Complex: result ← (a + b) * c ^ 2<br>Scientific: compound ← principal * (1 + rate) ^ years</div>
+                    </div>
+
+                    <div class="keyword-item">
+                        <div class="keyword-syntax">Comparison Operators</div>
+                        <div class="keyword-description">Use for conditions in IF statements and WHILE loops. Support mathematical comparisons.</div>
+                        <div class="keyword-example">> (greater than)<br>< (less than)<br>>= (greater or equal)<br><= (less or equal)<br>= (equal to)</div>
                     </div>
                 </div>
 
                 <div class="keyword-section">
-                    <h3>Control Structures</h3>
-                    
+                    <h3>Execution Controls</h3>
+
                     <div class="keyword-item">
-                        <div class="keyword-syntax">FOR variable ← start TO end [STEP increment] DO<br>&nbsp;&nbsp;&nbsp;&nbsp;statements<br>END FOR</div>
-                        <div class="keyword-description">Repeats statements with counter from start to end. STEP is optional (default 1). Use negative step to count backwards.</div>
-                        <div class="keyword-example">FOR i ← 1 TO 10 STEP 2 DO<br>&nbsp;&nbsp;&nbsp;&nbsp;PRINT i<br>END FOR<br><br>FOR i ← 10 TO 1 STEP -1 DO<br>&nbsp;&nbsp;&nbsp;&nbsp;PRINT i<br>END FOR</div>
+                        <div class="keyword-syntax">Step Through Execution</div>
+                        <div class="keyword-description">Execute one line at a time to understand algorithm flow. Watch variables change in the Variables panel.</div>
+                        <div class="keyword-example">"Next Step" - Execute current line<br>"Step Back" - Undo last execution<br>"Auto Run" - Continuous execution<br>"Reset" - Start over</div>
+                    </div>
+
+                    <div class="keyword-item">
+                        <div class="keyword-syntax">Breakpoints</div>
+                        <div class="keyword-description">Click on line numbers to set breakpoints. Execution pauses BEFORE the breakpoint line during Auto Run.</div>
+                        <div class="keyword-example">Click gray line number → Red dot appears<br>Auto Run pauses at breakpoints<br>Click again to remove breakpoint<br>Useful for debugging loops and functions</div>
+                    </div>
+
+                    <div class="keyword-item">
+                        <div class="keyword-syntax">Auto Run Speed</div>
+                        <div class="keyword-description">Adjust execution speed with the slider. Slower speeds help understand complex algorithms step by step.</div>
+                        <div class="keyword-example">Slow: Watch each variable change<br>Medium: Good for most algorithms<br>Fast: Quick overview of execution</div>
+                    </div>
+                </div>
+
+                <div class="keyword-section">
+                    <h3>Interface Guide</h3>
+
+                    <div class="keyword-item">
+                        <div class="keyword-syntax">Code Editor Panel</div>
+                        <div class="keyword-description">Write and edit pseudocode with syntax highlighting. Line numbers show current execution and breakpoints.</div>
+                        <div class="keyword-example">Syntax colors: Keywords (blue), Variables (cyan), Numbers (green), Strings (orange)<br>Current line highlighted in yellow<br>Click line numbers for breakpoints</div>
+                    </div>
+
+                    <div class="keyword-item">
+                        <div class="keyword-syntax">Variables Panel</div>
+                        <div class="keyword-description">Real-time display of all variables and their current values. Updates automatically during execution.</div>
+                        <div class="keyword-example">Shows variable names and values<br>Updates immediately after assignment<br>Tracks changes during loops<br>Function parameters displayed during calls</div>
+                    </div>
+
+                    <div class="keyword-item">
+                        <div class="keyword-syntax">Output Panel</div>
+                        <div class="keyword-description">Displays results from PRINT statements and program output. Shows execution results and error messages.</div>
+                        <div class="keyword-example">PRINT statement output<br>Function return values<br>Error messages and warnings<br>Algorithm results and calculations</div>
+                    </div>
+
+                    <div class="keyword-item">
+                        <div class="keyword-syntax">Control Buttons</div>
+                        <div class="keyword-description">Main execution controls for running and debugging your pseudocode algorithms.</div>
+                        <div class="keyword-example">Parse & Start: Begin execution<br>Next Step: Execute one line<br>Step Back: Undo last step<br>Auto Run: Continuous execution<br>Reset: Clear all and restart</div>
                     </div>
                 </div>
             </div>
@@ -777,8 +1012,10 @@ Click line numbers to set breakpoints!"></textarea>
             }
 
             initializeEventListeners() {
-                document.getElementById('parseBtn').addEventListener('click', () => this.parseCode());
-                document.getElementById('startBtn').addEventListener('click', () => this.start());
+                document.getElementById('startBtn').addEventListener('click', () => {
+                    this.parseCode();
+                    this.start();
+                });
                 document.getElementById('nextBtn').addEventListener('click', () => this.nextStep());
                 document.getElementById('prevBtn').addEventListener('click', () => this.stepBack());
                 document.getElementById('resetBtn').addEventListener('click', () => this.reset());
@@ -796,7 +1033,12 @@ Click line numbers to set breakpoints!"></textarea>
                         codeInput.selectionStart = codeInput.selectionEnd = start + 4;
                     }
                 });
-                
+
+                // Enable Parse & Start button when user types custom code
+                codeInput.addEventListener('input', () => {
+                    this.updateButtons();
+                });
+
                 const modal = document.getElementById('helpModal');
                 document.querySelector('.close').addEventListener('click', () => {
                     modal.style.display = 'none';
@@ -815,12 +1057,10 @@ Click line numbers to set breakpoints!"></textarea>
                     }
                 });
 
-                const speedSlider = document.getElementById('speedSlider');
-                speedSlider.addEventListener('input', (e) => {
+                const speedSelect = document.getElementById('speedSelect');
+                speedSelect.addEventListener('change', (e) => {
                     this.autoRunSpeed = parseInt(e.target.value);
-                    this.updateSpeedLabel();
                 });
-                this.updateSpeedLabel();
             }
 
             parseCode() {
@@ -1195,7 +1435,8 @@ Click line numbers to set breakpoints!"></textarea>
                     });
                 }
 
-                if (expr.includes('+') && (expr.includes('"') || expr.includes("'"))) {
+                // Check if this should be treated as string concatenation
+                if (this.shouldUseStringEvaluation(expr)) {
                     return this.evaluateStringExpression(expr);
                 }
 
@@ -1229,6 +1470,26 @@ Click line numbers to set breakpoints!"></textarea>
                 }
                 
                 return this.evaluateArithmetic(expr);
+            }
+
+            shouldUseStringEvaluation(expr) {
+                // If expression contains quotes, it's definitely string concatenation
+                if (expr.includes('"') || expr.includes("'")) {
+                    return true;
+                }
+
+                // If expression contains + but no other arithmetic operators, check if any variables are strings
+                if (expr.includes('+') && !expr.match(/[*\-/^()]/)) {
+                    // Extract variable names from the expression
+                    const varNames = expr.match(/\b[a-zA-Z_]\w*\b/g) || [];
+                    for (const varName of varNames) {
+                        if (this.variables.hasOwnProperty(varName) && typeof this.variables[varName] === 'string') {
+                            return true;
+                        }
+                    }
+                }
+
+                return false;
             }
 
             callFunction(funcName, argsStr) {
@@ -2323,8 +2584,12 @@ Click line numbers to set breakpoints!"></textarea>
                 const nextBtn = document.getElementById('nextBtn');
                 const prevBtn = document.getElementById('prevBtn');
                 const autoBtn = document.getElementById('autoBtn');
+                const codeInput = document.getElementById('codeInput');
 
-                startBtn.disabled = this.parsedCode.length === 0 || this.isRunning;
+                // Enable Parse & Start button if there's code in the input field or already parsed code, and not currently running
+                const hasCode = (codeInput && codeInput.value.trim().length > 0) || this.parsedCode.length > 0;
+                startBtn.disabled = !hasCode || this.isRunning;
+
                 nextBtn.disabled = !this.isRunning || this.autoRunning;
                 prevBtn.disabled = !this.isRunning || this.executionHistory.length === 0;
                 autoBtn.disabled = this.parsedCode.length === 0;
@@ -2353,22 +2618,6 @@ Click line numbers to set breakpoints!"></textarea>
                 document.getElementById('executionStatus').textContent = status;
             }
 
-            updateSpeedLabel() {
-                const speedLabel = document.getElementById('speedLabel');
-                const speedNames = {
-                    1: 'Very Slow',
-                    2: 'Slow',
-                    3: 'Slow',
-                    4: 'Medium',
-                    5: 'Normal',
-                    6: 'Normal',
-                    7: 'Fast',
-                    8: 'Fast',
-                    9: 'Very Fast',
-                    10: 'Maximum'
-                };
-                speedLabel.textContent = speedNames[this.autoRunSpeed] || 'Normal';
-            }
         }
 
         // Initialize the animator when the page loads
