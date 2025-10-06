@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Non-Transitive Dice - Mr Lash Maths</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            background: #f8f9fa;
+            color: #333;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .game-area {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .dice-setup {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .dice-setup h3 {
+            margin-bottom: 1rem;
+            color: #2c3e50;
+        }
+
+        .dice-config {
+            margin-bottom: 1rem;
+        }
+
+        .dice-config label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .dice-config select,
+        .dice-config input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .dice-config input[type="color"] {
+            width: 60px;
+            height: 40px;
+            padding: 0;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .face-values {
+            margin-top: 1rem;
+        }
+
+        .face-values label {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .face-inputs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .face-inputs input {
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .dice-display {
+            margin: 1rem 0;
+            text-align: center;
+        }
+
+        .dice-visual {
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            margin: 0 auto;
+            transition: transform 0.1s ease;
+        }
+
+        .dice-visual.rolling {
+            animation: diceRoll 0.1s ease-in-out;
+        }
+
+        @keyframes diceRoll {
+            0% { transform: rotateX(0deg) rotateY(0deg) scale(1); }
+            25% { transform: rotateX(90deg) rotateY(45deg) scale(1.1); }
+            50% { transform: rotateX(180deg) rotateY(90deg) scale(0.9); }
+            75% { transform: rotateX(270deg) rotateY(135deg) scale(1.1); }
+            100% { transform: rotateX(360deg) rotateY(180deg) scale(1); }
+        }
+
+        .dice-visual.final-roll {
+            animation: finalBounce 0.3s ease-out;
+        }
+
+        @keyframes finalBounce {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .controls {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .control-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #219a52;
+        }
+
+        .simulation-controls {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .simulation-controls input {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .results {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .current-roll {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .roll-result {
+            font-size: 1.2rem;
+            margin: 0.5rem 0;
+        }
+
+        .winner {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin: 1rem 0;
+            padding: 1rem;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .winner.dice1 {
+            background: #e8f5e8;
+            color: #2d5a2d;
+        }
+
+        .winner.dice2 {
+            background: #e8f0ff;
+            color: #2d4a5a;
+        }
+
+        .winner.tie {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .statistics {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .stat-card {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .probability-analysis {
+            margin-top: 2rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+
+        .probability-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 0.5rem;
+            margin-top: 1rem;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+
+        .prob-cell {
+            padding: 0.25rem;
+            text-align: center;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            background: white;
+        }
+
+        .prob-header {
+            background: #e9ecef;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .game-area {
+                grid-template-columns: 1fr;
+            }
+
+            .control-buttons {
+                grid-template-columns: 1fr;
+            }
+
+            .statistics {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .statistics {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Non-Transitive Dice</h1>
+            <p class="subtitle">Explore the fascinating world of non-transitive probability with custom dice</p>
+        </header>
+
+        <div class="game-area">
+            <div class="dice-setup">
+                <h3>Dice 1</h3>
+                <div class="dice-config">
+                    <label for="dice1-type">Dice Type:</label>
+                    <select id="dice1-type" onchange="updateDice(1)">
+                        <option value="4">D4 (4 sides)</option>
+                        <option value="6" selected>D6 (6 sides)</option>
+                        <option value="8">D8 (8 sides)</option>
+                        <option value="12">D12 (12 sides)</option>
+                    </select>
+                </div>
+                <div class="dice-config">
+                    <label for="dice1-color">Color:</label>
+                    <input type="color" id="dice1-color" value="#e74c3c" onchange="updateDiceDisplay(1)">
+                </div>
+                <div class="face-values">
+                    <label>Face Values:</label>
+                    <div class="face-inputs" id="dice1-faces"></div>
+                </div>
+                <div class="dice-display">
+                    <div class="dice-visual" id="dice1-visual">?</div>
+                </div>
+            </div>
+
+            <div class="dice-setup">
+                <h3>Dice 2</h3>
+                <div class="dice-config">
+                    <label for="dice2-type">Dice Type:</label>
+                    <select id="dice2-type" onchange="updateDice(2)">
+                        <option value="4">D4 (4 sides)</option>
+                        <option value="6" selected>D6 (6 sides)</option>
+                        <option value="8">D8 (8 sides)</option>
+                        <option value="12">D12 (12 sides)</option>
+                    </select>
+                </div>
+                <div class="dice-config">
+                    <label for="dice2-color">Color:</label>
+                    <input type="color" id="dice2-color" value="#3498db" onchange="updateDiceDisplay(2)">
+                </div>
+                <div class="face-values">
+                    <label>Face Values:</label>
+                    <div class="face-inputs" id="dice2-faces"></div>
+                </div>
+                <div class="dice-display">
+                    <div class="dice-visual" id="dice2-visual">?</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="control-buttons">
+                <button class="btn btn-primary" onclick="rollOnce()">Roll Once</button>
+                <button class="btn btn-secondary" onclick="resetStats()">Reset Statistics</button>
+            </div>
+            <div class="simulation-controls">
+                <input type="number" id="simulation-count" value="1000" min="1" max="100000" placeholder="Number of simulations">
+                <button class="btn btn-success" onclick="runSimulation()">Run Simulation</button>
+            </div>
+        </div>
+
+        <div class="results">
+            <div class="current-roll">
+                <h3>Last Roll Result</h3>
+                <div class="roll-result" id="dice1-result">Dice 1: -</div>
+                <div class="roll-result" id="dice2-result">Dice 2: -</div>
+                <div class="winner" id="winner-display" style="display: none;">-</div>
+            </div>
+
+            <div class="statistics">
+                <div class="stat-card">
+                    <div class="stat-number" id="total-games">0</div>
+                    <div class="stat-label">Total Games</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="dice1-wins">0</div>
+                    <div class="stat-label">Dice 1 Wins</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="dice2-wins">0</div>
+                    <div class="stat-label">Dice 2 Wins</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="ties">0</div>
+                    <div class="stat-label">Ties</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="dice1-percentage">0%</div>
+                    <div class="stat-label">Dice 1 Win Rate</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="dice2-percentage">0%</div>
+                    <div class="stat-label">Dice 2 Win Rate</div>
+                </div>
+            </div>
+
+            <div class="probability-analysis">
+                <h3>Theoretical Probability Analysis</h3>
+                <div id="probability-details"></div>
+                <div class="probability-grid" id="probability-grid"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        let gameStats = {
+            totalGames: 0,
+            dice1Wins: 0,
+            dice2Wins: 0,
+            ties: 0
+        };
+
+        let dice1 = {
+            sides: 6,
+            color: '#e74c3c',
+            faces: [1, 2, 3, 4, 5, 6]
+        };
+
+        let dice2 = {
+            sides: 6,
+            color: '#3498db',
+            faces: [1, 2, 3, 4, 5, 6]
+        };
+
+        // Initialize the interface
+        function init() {
+            updateDice(1);
+            updateDice(2);
+            updateDiceDisplay(1);
+            updateDiceDisplay(2);
+            calculateProbability();
+        }
+
+        // Update dice configuration
+        function updateDice(diceNum) {
+            const sides = parseInt(document.getElementById(`dice${diceNum}-type`).value);
+            const dice = diceNum === 1 ? dice1 : dice2;
+
+            dice.sides = sides;
+            dice.faces = Array(sides).fill(0).map((_, i) => i + 1);
+
+            // Create face input fields
+            const container = document.getElementById(`dice${diceNum}-faces`);
+            container.innerHTML = '';
+
+            for (let i = 0; i < sides; i++) {
+                const input = document.createElement('input');
+                input.type = 'number';
+                input.value = dice.faces[i];
+                input.min = '0';
+                input.max = '100';
+                input.onchange = () => updateFaceValue(diceNum, i, input.value);
+                container.appendChild(input);
+            }
+
+            updateDiceDisplay(diceNum);
+            calculateProbability();
+        }
+
+        // Update face value
+        function updateFaceValue(diceNum, faceIndex, value) {
+            const dice = diceNum === 1 ? dice1 : dice2;
+            dice.faces[faceIndex] = parseInt(value) || 0;
+            calculateProbability();
+        }
+
+        // Update dice visual display
+        function updateDiceDisplay(diceNum) {
+            const dice = diceNum === 1 ? dice1 : dice2;
+            const color = document.getElementById(`dice${diceNum}-color`).value;
+            dice.color = color;
+
+            const visual = document.getElementById(`dice${diceNum}-visual`);
+            visual.style.backgroundColor = color;
+        }
+
+        // Roll a single die
+        function rollDie(dice) {
+            const randomIndex = Math.floor(Math.random() * dice.sides);
+            return dice.faces[randomIndex];
+        }
+
+        // Roll once and display result with animation
+        function rollOnce() {
+            // Disable the roll button during animation
+            const rollButton = document.querySelector('button[onclick="rollOnce()"]');
+            rollButton.disabled = true;
+            rollButton.textContent = 'Rolling...';
+
+            // Get the final roll results
+            const roll1 = rollDie(dice1);
+            const roll2 = rollDie(dice2);
+
+            // Get dice visual elements
+            const dice1Visual = document.getElementById('dice1-visual');
+            const dice2Visual = document.getElementById('dice2-visual');
+
+            // Hide winner display during rolling
+            document.getElementById('winner-display').style.display = 'none';
+
+            // Start rolling animation
+            let rollCount = 0;
+            const maxRolls = 15; // Number of quick random changes
+            const rollInterval = 80; // Milliseconds between changes
+
+            const rollingAnimation = setInterval(() => {
+                // Add rolling class for animation
+                dice1Visual.className = 'dice-visual rolling';
+                dice2Visual.className = 'dice-visual rolling';
+
+                // Show random values during rolling
+                const tempRoll1 = rollDie(dice1);
+                const tempRoll2 = rollDie(dice2);
+
+                dice1Visual.textContent = tempRoll1;
+                dice2Visual.textContent = tempRoll2;
+
+                rollCount++;
+
+                // Remove rolling class after animation completes
+                setTimeout(() => {
+                    dice1Visual.className = 'dice-visual';
+                    dice2Visual.className = 'dice-visual';
+                }, 100);
+
+                if (rollCount >= maxRolls) {
+                    clearInterval(rollingAnimation);
+
+                    // Show final results with bounce animation
+                    setTimeout(() => {
+                        dice1Visual.className = 'dice-visual final-roll';
+                        dice2Visual.className = 'dice-visual final-roll';
+
+                        dice1Visual.textContent = roll1;
+                        dice2Visual.textContent = roll2;
+
+                        // Update text results
+                        document.getElementById('dice1-result').textContent = `Dice 1: ${roll1}`;
+                        document.getElementById('dice2-result').textContent = `Dice 2: ${roll2}`;
+
+                        // Determine and display winner
+                        let winner, winnerClass;
+                        if (roll1 > roll2) {
+                            winner = 'Dice 1 Wins!';
+                            winnerClass = 'dice1';
+                            gameStats.dice1Wins++;
+                        } else if (roll2 > roll1) {
+                            winner = 'Dice 2 Wins!';
+                            winnerClass = 'dice2';
+                            gameStats.dice2Wins++;
+                        } else {
+                            winner = 'It\'s a Tie!';
+                            winnerClass = 'tie';
+                            gameStats.ties++;
+                        }
+
+                        gameStats.totalGames++;
+
+                        // Display winner
+                        const winnerDisplay = document.getElementById('winner-display');
+                        winnerDisplay.textContent = winner;
+                        winnerDisplay.className = `winner ${winnerClass}`;
+                        winnerDisplay.style.display = 'block';
+
+                        updateStatistics();
+
+                        // Re-enable roll button
+                        rollButton.disabled = false;
+                        rollButton.textContent = 'Roll Once';
+
+                        // Remove final-roll class after animation
+                        setTimeout(() => {
+                            dice1Visual.className = 'dice-visual';
+                            dice2Visual.className = 'dice-visual';
+                        }, 300);
+
+                    }, 100);
+                }
+            }, rollInterval);
+        }
+
+        // Run multiple simulations
+        function runSimulation() {
+            const count = parseInt(document.getElementById('simulation-count').value);
+
+            for (let i = 0; i < count; i++) {
+                const roll1 = rollDie(dice1);
+                const roll2 = rollDie(dice2);
+
+                if (roll1 > roll2) {
+                    gameStats.dice1Wins++;
+                } else if (roll2 > roll1) {
+                    gameStats.dice2Wins++;
+                } else {
+                    gameStats.ties++;
+                }
+                gameStats.totalGames++;
+            }
+
+            updateStatistics();
+        }
+
+        // Update statistics display
+        function updateStatistics() {
+            document.getElementById('total-games').textContent = gameStats.totalGames;
+            document.getElementById('dice1-wins').textContent = gameStats.dice1Wins;
+            document.getElementById('dice2-wins').textContent = gameStats.dice2Wins;
+            document.getElementById('ties').textContent = gameStats.ties;
+
+            if (gameStats.totalGames > 0) {
+                const dice1Percentage = (gameStats.dice1Wins / gameStats.totalGames * 100).toFixed(1);
+                const dice2Percentage = (gameStats.dice2Wins / gameStats.totalGames * 100).toFixed(1);
+
+                document.getElementById('dice1-percentage').textContent = `${dice1Percentage}%`;
+                document.getElementById('dice2-percentage').textContent = `${dice2Percentage}%`;
+            }
+        }
+
+        // Reset statistics
+        function resetStats() {
+            gameStats = {
+                totalGames: 0,
+                dice1Wins: 0,
+                dice2Wins: 0,
+                ties: 0
+            };
+
+            document.getElementById('dice1-visual').textContent = '?';
+            document.getElementById('dice2-visual').textContent = '?';
+            document.getElementById('winner-display').style.display = 'none';
+            document.getElementById('dice1-result').textContent = 'Dice 1: -';
+            document.getElementById('dice2-result').textContent = 'Dice 2: -';
+
+            updateStatistics();
+        }
+
+        // Calculate theoretical probabilities
+        function calculateProbability() {
+            let dice1Wins = 0;
+            let dice2Wins = 0;
+            let ties = 0;
+            let totalOutcomes = dice1.sides * dice2.sides;
+
+            // Create probability grid
+            const grid = document.getElementById('probability-grid');
+            grid.innerHTML = '';
+
+            // Add headers
+            const emptyCell = document.createElement('div');
+            emptyCell.className = 'prob-cell prob-header';
+            emptyCell.textContent = '';
+            grid.appendChild(emptyCell);
+
+            for (let j = 0; j < dice2.sides; j++) {
+                const header = document.createElement('div');
+                header.className = 'prob-cell prob-header';
+                header.textContent = dice2.faces[j];
+                grid.appendChild(header);
+            }
+
+            // Calculate all outcomes
+            for (let i = 0; i < dice1.sides; i++) {
+                // Row header
+                const rowHeader = document.createElement('div');
+                rowHeader.className = 'prob-cell prob-header';
+                rowHeader.textContent = dice1.faces[i];
+                grid.appendChild(rowHeader);
+
+                for (let j = 0; j < dice2.sides; j++) {
+                    const roll1 = dice1.faces[i];
+                    const roll2 = dice2.faces[j];
+
+                    const cell = document.createElement('div');
+                    cell.className = 'prob-cell';
+
+                    if (roll1 > roll2) {
+                        dice1Wins++;
+                        cell.textContent = '1';
+                        cell.style.backgroundColor = '#e8f5e8';
+                    } else if (roll2 > roll1) {
+                        dice2Wins++;
+                        cell.textContent = '2';
+                        cell.style.backgroundColor = '#e8f0ff';
+                    } else {
+                        ties++;
+                        cell.textContent = 'T';
+                        cell.style.backgroundColor = '#fff3cd';
+                    }
+
+                    grid.appendChild(cell);
+                }
+            }
+
+            // Update grid layout
+            grid.style.gridTemplateColumns = `repeat(${dice2.sides + 1}, 1fr)`;
+
+            // Calculate percentages
+            const dice1Prob = (dice1Wins / totalOutcomes * 100).toFixed(1);
+            const dice2Prob = (dice2Wins / totalOutcomes * 100).toFixed(1);
+            const tieProb = (ties / totalOutcomes * 100).toFixed(1);
+
+            // Update probability details
+            document.getElementById('probability-details').innerHTML = `
+                <p><strong>Theoretical Probabilities:</strong></p>
+                <p>Dice 1 wins: ${dice1Wins}/${totalOutcomes} outcomes (${dice1Prob}%)</p>
+                <p>Dice 2 wins: ${dice2Wins}/${totalOutcomes} outcomes (${dice2Prob}%)</p>
+                <p>Ties: ${ties}/${totalOutcomes} outcomes (${tieProb}%)</p>
+                <p><em>Grid shows: 1 = Dice 1 wins, 2 = Dice 2 wins, T = Tie</em></p>
+            `;
+        }
+
+        // Initialize on page load
+        window.onload = init;
+    </script>
+</body>
+</html>
