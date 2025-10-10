@@ -51,25 +51,6 @@
             width: auto;
         }
 
-        .nav-links {
-            display: flex;
-            gap: 2rem;
-            list-style: none;
-        }
-
-        .nav-links a {
-            text-decoration: none;
-            color: #666;
-            font-weight: 500;
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
-            transition: all 0.2s ease;
-        }
-
-        .nav-links a:hover {
-            background: #e9ecef;
-            color: #333;
-        }
 
         main {
             padding: 3rem 0;
@@ -163,11 +144,6 @@
         }
 
         @media (max-width: 768px) {
-            .nav-links {
-                flex-direction: column;
-                gap: 1rem;
-            }
-
             .page-header h1 {
                 font-size: 2rem;
             }
@@ -185,15 +161,6 @@
                 <a href="/" class="logo">
                     <img src="MrLashmaths.png" alt="Mr Lash Maths Logo">
                 </a>
-                <div class="nav-links">
-                    <a href="/light-bot">Light Bot</a>
-                    <a href="/regression">Regression</a>
-                    <a href="/pseudocode">Pseudocode</a>
-                    <a href="/chaoticballs">Chaotic Balls</a>
-                    <a href="/pi-estimator">Pi Estimator</a>
-                    <a href="/non-transitive_dice">Non-Transitive Dice</a>
-                    <a href="/random-walks-and-gol">Random Walk and Game Of Life</a>
-                </div>
             </nav>
         </div>
     </header>

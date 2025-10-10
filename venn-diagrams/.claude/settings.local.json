@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Read(//home/toby/Projects/IGGS-tlelacheur.github.io/**)"
-    ],
-    "deny": [],
-    "ask": []
-  }
-}
