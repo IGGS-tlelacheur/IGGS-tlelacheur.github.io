@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mathematical Simulations - Mr Lash Maths</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            background: #f8f9fa;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .site-nav {
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .home-link {
+            display: inline-block;
+            transition: transform 0.2s ease;
+        }
+
+        .home-link:hover {
+            transform: scale(1.05);
+        }
+
+        .nav-logo {
+            height: 50px;
+            width: auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+            font-size: 2.5rem;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .tabs {
+            display: flex;
+            background: white;
+            border-radius: 8px 8px 0 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 0;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 1rem 2rem;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #666;
+            transition: all 0.3s ease;
+        }
+
+        .tab-button.active {
+            color: #2c3e50;
+            border-bottom-color: #3498db;
+            background: #f8f9fa;
+        }
+
+        .tab-button:hover {
+            background: #f8f9fa;
+            color: #2c3e50;
+        }
+
+        .tab-content {
+            background: white;
+            border-radius: 0 0 8px 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 2rem;
+            min-height: 600px;
+        }
+
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        .simulation-area {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 2rem;
+            height: 600px;
+        }
+
+        .controls-panel {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1.5rem;
+            height: fit-content;
+        }
+
+        .control-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+
+        .control-group input,
+        .control-group select {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .control-group input[type="range"] {
+            margin-bottom: 0.5rem;
+        }
+
+        .range-value {
+            text-align: center;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 0.75rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 0.5rem;
+        }
+
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #219a52;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        .visualization-area {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #randomWalkCanvas,
+        #gameOfLifeCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+        }
+
+        .stats-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 1rem;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            min-width: 200px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: #666;
+        }
+
+        .stat-value {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .preset-patterns {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .preset-btn {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s ease;
+        }
+
+        .preset-btn:hover {
+            background: #f8f9fa;
+            border-color: #3498db;
+        }
+
+        @media (max-width: 768px) {
+            .simulation-area {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+
+            .controls-panel {
+                order: 2;
+            }
+
+            .visualization-area {
+                height: 400px;
+                order: 1;
+            }
+
+            .tabs {
+                flex-direction: column;
+            }
+
+            .tab-button {
+                border-bottom: none;
+                border-right: 3px solid transparent;
+            }
+
+            .tab-button.active {
+                border-right-color: #3498db;
+                border-bottom-color: transparent;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="site-nav">
+            <a href="../" class="home-link">
+                <img src="../MrLashmaths.png" alt="Mr Lash Maths - Home" class="nav-logo">
+            </a>
+        </nav>
+
+        <header>
+            <h1>Mathematical Simulations</h1>
+            <p class="subtitle">Explore random walks and cellular automata through interactive simulations</p>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-button active" data-tab="random-walks">Random Walks</button>
+            <button class="tab-button" data-tab="game-of-life">Conway's Game of Life</button>
+        </div>
+
+        <div class="tab-content">
+            <!-- Random Walks Tab -->
+            <div class="tab-panel active" id="random-walks">
+                <div class="simulation-area">
+                    <div class="controls-panel">
+                        <h3>Random Walk Controls</h3>
+
+                        <div class="control-group">
+                            <label for="walkType">Walk Type:</label>
+                            <select id="walkType">
+                                <option value="simple">Simple Random Walk</option>
+                                <option value="biased">Biased Random Walk</option>
+                                <option value="levy">Lévy Flight</option>
+                                <option value="multiple">Multiple Walkers</option>
+                            </select>
+                        </div>
+
+                        <div class="control-group">
+                            <label for="stepSize">Step Size:</label>
+                            <input type="range" id="stepSize" min="1" max="10" value="3">
+                            <div class="range-value" id="stepSizeValue">3</div>
+                        </div>
+
+                        <div class="control-group">
+                            <label for="speed">Animation Speed:</label>
+                            <input type="range" id="speed" min="1" max="100" value="50">
+                            <div class="range-value" id="speedValue">50</div>
+                        </div>
+
+                        <div class="control-group" id="biasGroup" style="display: none;">
+                            <label for="bias">Bias Direction:</label>
+                            <select id="bias">
+                                <option value="none">No Bias</option>
+                                <option value="up">Upward</option>
+                                <option value="right">Rightward</option>
+                                <option value="down">Downward</option>
+                                <option value="left">Leftward</option>
+                            </select>
+                        </div>
+
+                        <div class="control-group" id="walkerCountGroup" style="display: none;">
+                            <label for="walkerCount">Number of Walkers:</label>
+                            <input type="range" id="walkerCount" min="1" max="20" value="5">
+                            <div class="range-value" id="walkerCountValue">5</div>
+                        </div>
+
+                        <button class="btn btn-primary" id="startWalk">Start Walk</button>
+                        <button class="btn btn-secondary" id="pauseWalk">Pause</button>
+                        <button class="btn btn-danger" id="clearWalk">Clear</button>
+                        <button class="btn btn-success" id="resetWalk">Reset</button>
+                    </div>
+
+                    <div class="visualization-area">
+                        <canvas id="randomWalkCanvas" width="800" height="600"></canvas>
+                        <div class="stats-panel">
+                            <div class="stat-item">
+                                <span class="stat-label">Steps:</span>
+                                <span class="stat-value" id="walkSteps">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Distance:</span>
+                                <span class="stat-value" id="walkDistance">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Position:</span>
+                                <span class="stat-value" id="walkPosition">(0, 0)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Game of Life Tab -->
+            <div class="tab-panel" id="game-of-life">
+                <div class="simulation-area">
+                    <div class="controls-panel">
+                        <h3>Game of Life Controls</h3>
+
+                        <div class="control-group">
+                            <label for="generationSpeed">Generation Speed:</label>
+                            <input type="range" id="generationSpeed" min="1" max="100" value="10">
+                            <div class="range-value" id="generationSpeedValue">10</div>
+                        </div>
+
+                        <div class="control-group">
+                            <label for="gridSize">Grid Size:</label>
+                            <select id="gridSize">
+                                <option value="50">50x50</option>
+                                <option value="75" selected>75x75</option>
+                                <option value="100">100x100</option>
+                                <option value="125">125x125</option>
+                            </select>
+                        </div>
+
+                        <button class="btn btn-primary" id="playGame">Play</button>
+                        <button class="btn btn-secondary" id="pauseGame">Pause</button>
+                        <button class="btn btn-danger" id="clearGame">Clear</button>
+                        <button class="btn btn-success" id="randomFill">Random Fill</button>
+
+                        <div class="control-group">
+                            <label>Preset Patterns:</label>
+                            <div class="preset-patterns">
+                                <button class="preset-btn" data-pattern="glider">Glider</button>
+                                <button class="preset-btn" data-pattern="blinker">Blinker</button>
+                                <button class="preset-btn" data-pattern="block">Block</button>
+                                <button class="preset-btn" data-pattern="beehive">Beehive</button>
+                                <button class="preset-btn" data-pattern="toad">Toad</button>
+                                <button class="preset-btn" data-pattern="beacon">Beacon</button>
+                                <button class="preset-btn" data-pattern="pentadecathlon">Pentadecathlon</button>
+                                <button class="preset-btn" data-pattern="gosper">Gosper Gun</button>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <label>Instructions:</label>
+                            <p style="font-size: 0.9rem; color: #666; line-height: 1.4;">
+                                Click cells to toggle them on/off. Use preset patterns or random fill to create initial conditions.
+                                Click Play to start the simulation.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="visualization-area">
+                        <canvas id="gameOfLifeCanvas" width="800" height="600"></canvas>
+                        <div class="stats-panel">
+                            <div class="stat-item">
+                                <span class="stat-label">Generation:</span>
+                                <span class="stat-value" id="generation">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Living Cells:</span>
+                                <span class="stat-value" id="livingCells">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Population:</span>
+                                <span class="stat-value" id="populationChange">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables for simulations
+        let randomWalkState = {
+            canvas: null,
+            ctx: null,
+            walkers: [],
+            isRunning: false,
+            animationId: null,
+            steps: 0,
+            startTime: null
+        };
+
+        let gameOfLifeState = {
+            canvas: null,
+            ctx: null,
+            grid: [],
+            isRunning: false,
+            generation: 0,
+            animationId: null,
+            cellSize: 8,
+            gridWidth: 75,
+            gridHeight: 75
+        };
+
+        // Tab switching functionality
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.addEventListener('click', () => {
+                const tabName = button.dataset.tab;
+
+                // Update active tab button
+                document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+                button.classList.add('active');
+
+                // Update active tab panel
+                document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+                document.getElementById(tabName).classList.add('active');
+
+                // Initialize the appropriate simulation
+                if (tabName === 'random-walks') {
+                    initRandomWalk();
+                } else if (tabName === 'game-of-life') {
+                    initGameOfLife();
+                }
+            });
+        });
+
+        // Range input value display updates
+        document.querySelectorAll('input[type="range"]').forEach(slider => {
+            const valueDisplay = document.getElementById(slider.id + 'Value');
+            if (valueDisplay) {
+                slider.addEventListener('input', () => {
+                    valueDisplay.textContent = slider.value;
+                });
+            }
+        });
+
+        // Random Walk Implementation
+        class RandomWalker {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.startX = x;
+                this.startY = y;
+                this.color = color;
+                this.path = [{x: x, y: y}];
+                this.steps = 0;
+            }
+
+            step(stepSize, bias = 'none', walkType = 'simple') {
+                let dx = 0, dy = 0;
+
+                if (walkType === 'levy') {
+                    // Lévy flight with power-law step distribution
+                    const r = Math.random();
+                    const levyStep = stepSize * Math.pow(r, -1/1.5);
+                    const angle = Math.random() * 2 * Math.PI;
+                    dx = Math.cos(angle) * Math.min(levyStep, stepSize * 5);
+                    dy = Math.sin(angle) * Math.min(levyStep, stepSize * 5);
+                } else {
+                    // Standard random walk with possible bias
+                    const directions = [];
+
+                    if (bias === 'up') {
+                        directions.push({dx: 0, dy: -stepSize}, {dx: 0, dy: -stepSize});
+                    } else if (bias === 'right') {
+                        directions.push({dx: stepSize, dy: 0}, {dx: stepSize, dy: 0});
+                    } else if (bias === 'down') {
+                        directions.push({dx: 0, dy: stepSize}, {dx: 0, dy: stepSize});
+                    } else if (bias === 'left') {
+                        directions.push({dx: -stepSize, dy: 0}, {dx: -stepSize, dy: 0});
+                    }
+
+                    // Add normal directions
+                    directions.push(
+                        {dx: stepSize, dy: 0},
+                        {dx: -stepSize, dy: 0},
+                        {dx: 0, dy: stepSize},
+                        {dx: 0, dy: -stepSize}
+                    );
+
+                    const move = directions[Math.floor(Math.random() * directions.length)];
+                    dx = move.dx;
+                    dy = move.dy;
+                }
+
+                this.x += dx;
+                this.y += dy;
+                this.path.push({x: this.x, y: this.y});
+                this.steps++;
+
+                // Keep path reasonable length
+                if (this.path.length > 1000) {
+                    this.path.shift();
+                }
+            }
+
+            getDistance() {
+                const dx = this.x - this.startX;
+                const dy = this.y - this.startY;
+                return Math.sqrt(dx * dx + dy * dy);
+            }
+
+            draw(ctx) {
+                // Draw path
+                if (this.path.length > 1) {
+                    ctx.strokeStyle = this.color;
+                    ctx.lineWidth = 1;
+                    ctx.globalAlpha = 0.7;
+                    ctx.beginPath();
+                    ctx.moveTo(this.path[0].x, this.path[0].y);
+                    for (let i = 1; i < this.path.length; i++) {
+                        ctx.lineTo(this.path[i].x, this.path[i].y);
+                    }
+                    ctx.stroke();
+                }
+
+                // Draw walker
+                ctx.globalAlpha = 1;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 4, 0, 2 * Math.PI);
+                ctx.fill();
+
+                // Draw start position
+                ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
+                ctx.beginPath();
+                ctx.arc(this.startX, this.startY, 3, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+        }
+
+        function initRandomWalk() {
+            randomWalkState.canvas = document.getElementById('randomWalkCanvas');
+            randomWalkState.ctx = randomWalkState.canvas.getContext('2d');
+
+            // Set up event listeners
+            document.getElementById('startWalk').addEventListener('click', startRandomWalk);
+            document.getElementById('pauseWalk').addEventListener('click', pauseRandomWalk);
+            document.getElementById('clearWalk').addEventListener('click', clearRandomWalk);
+            document.getElementById('resetWalk').addEventListener('click', resetRandomWalk);
+
+            // Walk type change handler
+            document.getElementById('walkType').addEventListener('change', updateWalkControls);
+            updateWalkControls();
+
+            resetRandomWalk();
+        }
+
+        function updateWalkControls() {
+            const walkType = document.getElementById('walkType').value;
+            const biasGroup = document.getElementById('biasGroup');
+            const walkerCountGroup = document.getElementById('walkerCountGroup');
+
+            if (walkType === 'biased') {
+                biasGroup.style.display = 'block';
+                walkerCountGroup.style.display = 'none';
+            } else if (walkType === 'multiple') {
+                biasGroup.style.display = 'none';
+                walkerCountGroup.style.display = 'block';
+            } else {
+                biasGroup.style.display = 'none';
+                walkerCountGroup.style.display = 'none';
+            }
+        }
+
+        function startRandomWalk() {
+            if (randomWalkState.isRunning) return;
+
+            randomWalkState.isRunning = true;
+            randomWalkState.startTime = Date.now();
+            animateRandomWalk();
+        }
+
+        function pauseRandomWalk() {
+            randomWalkState.isRunning = false;
+            if (randomWalkState.animationId) {
+                cancelAnimationFrame(randomWalkState.animationId);
+            }
+        }
+
+        function clearRandomWalk() {
+            pauseRandomWalk();
+            const ctx = randomWalkState.ctx;
+            ctx.clearRect(0, 0, randomWalkState.canvas.width, randomWalkState.canvas.height);
+
+            randomWalkState.walkers.forEach(walker => {
+                walker.path = [{x: walker.x, y: walker.y}];
+            });
+        }
+
+        function resetRandomWalk() {
+            pauseRandomWalk();
+
+            const canvas = randomWalkState.canvas;
+            const ctx = randomWalkState.ctx;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+
+            randomWalkState.walkers = [];
+            randomWalkState.steps = 0;
+
+            const walkType = document.getElementById('walkType').value;
+            const colors = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c', '#e67e22', '#34495e'];
+
+            if (walkType === 'multiple') {
+                const walkerCount = parseInt(document.getElementById('walkerCount').value);
+                for (let i = 0; i < walkerCount; i++) {
+                    const angle = (i / walkerCount) * 2 * Math.PI;
+                    const radius = 20;
+                    const x = centerX + Math.cos(angle) * radius;
+                    const y = centerY + Math.sin(angle) * radius;
+                    randomWalkState.walkers.push(new RandomWalker(x, y, colors[i % colors.length]));
+                }
+            } else {
+                randomWalkState.walkers.push(new RandomWalker(centerX, centerY, colors[0]));
+            }
+
+            updateRandomWalkStats();
+            drawRandomWalk();
+        }
+
+        function animateRandomWalk() {
+            if (!randomWalkState.isRunning) return;
+
+            const stepSize = parseInt(document.getElementById('stepSize').value);
+            const speed = parseInt(document.getElementById('speed').value);
+            const walkType = document.getElementById('walkType').value;
+            const bias = document.getElementById('bias') ? document.getElementById('bias').value : 'none';
+
+            // Update walkers
+            randomWalkState.walkers.forEach(walker => {
+                walker.step(stepSize, bias, walkType);
+            });
+
+            randomWalkState.steps++;
+            updateRandomWalkStats();
+            drawRandomWalk();
+
+            // Control animation speed
+            setTimeout(() => {
+                randomWalkState.animationId = requestAnimationFrame(animateRandomWalk);
+            }, 101 - speed);
+        }
+
+        function drawRandomWalk() {
+            const ctx = randomWalkState.ctx;
+            const canvas = randomWalkState.canvas;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw grid
+            ctx.strokeStyle = '#f0f0f0';
+            ctx.lineWidth = 1;
+            for (let x = 0; x < canvas.width; x += 50) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            for (let y = 0; y < canvas.height; y += 50) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+
+            // Draw walkers
+            randomWalkState.walkers.forEach(walker => {
+                walker.draw(ctx);
+            });
+        }
+
+        function updateRandomWalkStats() {
+            document.getElementById('walkSteps').textContent = randomWalkState.steps;
+
+            if (randomWalkState.walkers.length === 1) {
+                const walker = randomWalkState.walkers[0];
+                const distance = walker.getDistance().toFixed(1);
+                document.getElementById('walkDistance').textContent = distance;
+                document.getElementById('walkPosition').textContent = `(${walker.x.toFixed(1)}, ${walker.y.toFixed(1)})`;
+            } else {
+                const avgDistance = randomWalkState.walkers.reduce((sum, walker) => sum + walker.getDistance(), 0) / randomWalkState.walkers.length;
+                document.getElementById('walkDistance').textContent = avgDistance.toFixed(1);
+                document.getElementById('walkPosition').textContent = `${randomWalkState.walkers.length} walkers`;
+            }
+        }
+
+        // Game of Life Implementation
+        function initGameOfLife() {
+            gameOfLifeState.canvas = document.getElementById('gameOfLifeCanvas');
+            gameOfLifeState.ctx = gameOfLifeState.canvas.getContext('2d');
+
+            // Set up event listeners
+            document.getElementById('playGame').addEventListener('click', playGameOfLife);
+            document.getElementById('pauseGame').addEventListener('click', pauseGameOfLife);
+            document.getElementById('clearGame').addEventListener('click', clearGameOfLife);
+            document.getElementById('randomFill').addEventListener('click', randomFillGameOfLife);
+            document.getElementById('gridSize').addEventListener('change', changeGridSize);
+
+            // Canvas click handler for editing cells
+            gameOfLifeState.canvas.addEventListener('click', handleCellClick);
+
+            // Preset pattern handlers
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    loadPresetPattern(btn.dataset.pattern);
+                });
+            });
+
+            changeGridSize();
+            clearGameOfLife();
+        }
+
+        function changeGridSize() {
+            const size = parseInt(document.getElementById('gridSize').value);
+            gameOfLifeState.gridWidth = size;
+            gameOfLifeState.gridHeight = size;
+            gameOfLifeState.cellSize = Math.floor(Math.min(
+                gameOfLifeState.canvas.width / size,
+                gameOfLifeState.canvas.height / size
+            ));
+
+            clearGameOfLife();
+        }
+
+        function createEmptyGrid() {
+            const grid = [];
+            for (let i = 0; i < gameOfLifeState.gridHeight; i++) {
+                grid[i] = [];
+                for (let j = 0; j < gameOfLifeState.gridWidth; j++) {
+                    grid[i][j] = 0;
+                }
+            }
+            return grid;
+        }
+
+        function handleCellClick(event) {
+            const rect = gameOfLifeState.canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+
+            const cellX = Math.floor(x / gameOfLifeState.cellSize);
+            const cellY = Math.floor(y / gameOfLifeState.cellSize);
+
+            if (cellX >= 0 && cellX < gameOfLifeState.gridWidth && cellY >= 0 && cellY < gameOfLifeState.gridHeight) {
+                gameOfLifeState.grid[cellY][cellX] = gameOfLifeState.grid[cellY][cellX] ? 0 : 1;
+                drawGameOfLife();
+                updateGameOfLifeStats();
+            }
+        }
+
+        function playGameOfLife() {
+            if (gameOfLifeState.isRunning) return;
+            gameOfLifeState.isRunning = true;
+            animateGameOfLife();
+        }
+
+        function pauseGameOfLife() {
+            gameOfLifeState.isRunning = false;
+            if (gameOfLifeState.animationId) {
+                cancelAnimationFrame(gameOfLifeState.animationId);
+            }
+        }
+
+        function clearGameOfLife() {
+            pauseGameOfLife();
+            gameOfLifeState.grid = createEmptyGrid();
+            gameOfLifeState.generation = 0;
+            drawGameOfLife();
+            updateGameOfLifeStats();
+        }
+
+        function randomFillGameOfLife() {
+            pauseGameOfLife();
+            gameOfLifeState.grid = createEmptyGrid();
+
+            for (let i = 0; i < gameOfLifeState.gridHeight; i++) {
+                for (let j = 0; j < gameOfLifeState.gridWidth; j++) {
+                    gameOfLifeState.grid[i][j] = Math.random() < 0.3 ? 1 : 0;
+                }
+            }
+
+            gameOfLifeState.generation = 0;
+            drawGameOfLife();
+            updateGameOfLifeStats();
+        }
+
+        function animateGameOfLife() {
+            if (!gameOfLifeState.isRunning) return;
+
+            const speed = parseInt(document.getElementById('generationSpeed').value);
+
+            updateGameOfLifeGeneration();
+            drawGameOfLife();
+            updateGameOfLifeStats();
+
+            setTimeout(() => {
+                gameOfLifeState.animationId = requestAnimationFrame(animateGameOfLife);
+            }, 1010 - speed * 10);
+        }
+
+        function updateGameOfLifeGeneration() {
+            const newGrid = createEmptyGrid();
+
+            for (let i = 0; i < gameOfLifeState.gridHeight; i++) {
+                for (let j = 0; j < gameOfLifeState.gridWidth; j++) {
+                    const neighbors = countNeighbors(i, j);
+                    const currentCell = gameOfLifeState.grid[i][j];
+
+                    if (currentCell === 1) {
+                        // Live cell
+                        if (neighbors === 2 || neighbors === 3) {
+                            newGrid[i][j] = 1; // Stays alive
+                        } else {
+                            newGrid[i][j] = 0; // Dies
+                        }
+                    } else {
+                        // Dead cell
+                        if (neighbors === 3) {
+                            newGrid[i][j] = 1; // Becomes alive
+                        } else {
+                            newGrid[i][j] = 0; // Stays dead
+                        }
+                    }
+                }
+            }
+
+            gameOfLifeState.grid = newGrid;
+            gameOfLifeState.generation++;
+        }
+
+        function countNeighbors(row, col) {
+            let count = 0;
+            for (let i = -1; i <= 1; i++) {
+                for (let j = -1; j <= 1; j++) {
+                    if (i === 0 && j === 0) continue;
+
+                    const newRow = row + i;
+                    const newCol = col + j;
+
+                    if (newRow >= 0 && newRow < gameOfLifeState.gridHeight &&
+                        newCol >= 0 && newCol < gameOfLifeState.gridWidth) {
+                        count += gameOfLifeState.grid[newRow][newCol];
+                    }
+                }
+            }
+            return count;
+        }
+
+        function drawGameOfLife() {
+            const ctx = gameOfLifeState.ctx;
+            const canvas = gameOfLifeState.canvas;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw grid lines
+            ctx.strokeStyle = '#e0e0e0';
+            ctx.lineWidth = 1;
+
+            for (let i = 0; i <= gameOfLifeState.gridWidth; i++) {
+                const x = i * gameOfLifeState.cellSize;
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, gameOfLifeState.gridHeight * gameOfLifeState.cellSize);
+                ctx.stroke();
+            }
+
+            for (let i = 0; i <= gameOfLifeState.gridHeight; i++) {
+                const y = i * gameOfLifeState.cellSize;
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(gameOfLifeState.gridWidth * gameOfLifeState.cellSize, y);
+                ctx.stroke();
+            }
+
+            // Draw cells
+            ctx.fillStyle = '#2c3e50';
+            for (let i = 0; i < gameOfLifeState.gridHeight; i++) {
+                for (let j = 0; j < gameOfLifeState.gridWidth; j++) {
+                    if (gameOfLifeState.grid[i][j] === 1) {
+                        ctx.fillRect(
+                            j * gameOfLifeState.cellSize + 1,
+                            i * gameOfLifeState.cellSize + 1,
+                            gameOfLifeState.cellSize - 2,
+                            gameOfLifeState.cellSize - 2
+                        );
+                    }
+                }
+            }
+        }
+
+        function updateGameOfLifeStats() {
+            document.getElementById('generation').textContent = gameOfLifeState.generation;
+
+            let livingCells = 0;
+            for (let i = 0; i < gameOfLifeState.gridHeight; i++) {
+                for (let j = 0; j < gameOfLifeState.gridWidth; j++) {
+                    if (gameOfLifeState.grid[i][j] === 1) {
+                        livingCells++;
+                    }
+                }
+            }
+
+            document.getElementById('livingCells').textContent = livingCells;
+
+            const totalCells = gameOfLifeState.gridWidth * gameOfLifeState.gridHeight;
+            const populationPercentage = ((livingCells / totalCells) * 100).toFixed(1);
+            document.getElementById('populationChange').textContent = `${populationPercentage}%`;
+        }
+
+        function loadPresetPattern(patternName) {
+            pauseGameOfLife();
+            clearGameOfLife();
+
+            const centerX = Math.floor(gameOfLifeState.gridWidth / 2);
+            const centerY = Math.floor(gameOfLifeState.gridHeight / 2);
+
+            const patterns = {
+                glider: [
+                    [0, 1, 0],
+                    [0, 0, 1],
+                    [1, 1, 1]
+                ],
+                blinker: [
+                    [1, 1, 1]
+                ],
+                block: [
+                    [1, 1],
+                    [1, 1]
+                ],
+                beehive: [
+                    [0, 1, 1, 0],
+                    [1, 0, 0, 1],
+                    [0, 1, 1, 0]
+                ],
+                toad: [
+                    [0, 1, 1, 1],
+                    [1, 1, 1, 0]
+                ],
+                beacon: [
+                    [1, 1, 0, 0],
+                    [1, 1, 0, 0],
+                    [0, 0, 1, 1],
+                    [0, 0, 1, 1]
+                ],
+                pentadecathlon: [
+                    [0, 0, 1, 0, 0, 0, 0, 1, 0, 0],
+                    [1, 1, 0, 1, 1, 1, 1, 0, 1, 1],
+                    [0, 0, 1, 0, 0, 0, 0, 1, 0, 0]
+                ],
+                gosper: [
+                    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0],
+                    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0],
+                    [0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1],
+                    [0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1],
+                    [1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                    [1,1,0,0,0,0,0,0,0,0,1,0,0,0,1,0,1,1,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0],
+                    [0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0],
+                    [0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                    [0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+                ]
+            };
+
+            const pattern = patterns[patternName];
+            if (!pattern) return;
+
+            const startX = centerX - Math.floor(pattern[0].length / 2);
+            const startY = centerY - Math.floor(pattern.length / 2);
+
+            for (let i = 0; i < pattern.length; i++) {
+                for (let j = 0; j < pattern[i].length; j++) {
+                    const x = startX + j;
+                    const y = startY + i;
+                    if (x >= 0 && x < gameOfLifeState.gridWidth && y >= 0 && y < gameOfLifeState.gridHeight) {
+                        gameOfLifeState.grid[y][x] = pattern[i][j];
+                    }
+                }
+            }
+
+            drawGameOfLife();
+            updateGameOfLifeStats();
+        }
+
+        // Initialize the first tab on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            initRandomWalk();
+        });
+    </script>
+</body>
+</html>

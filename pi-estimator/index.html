@@ -22,6 +22,30 @@
             margin: 0 auto;
         }
 
+        .site-nav {
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .home-link {
+            display: inline-block;
+            transition: transform 0.2s ease;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+        }
+
+        .home-link:hover {
+            transform: scale(1.05);
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .nav-logo {
+            height: 50px;
+            width: auto;
+        }
+
         h1 {
             text-align: center;
             margin-bottom: 30px;
@@ -227,6 +251,12 @@
 </head>
 <body>
     <div class="container">
+        <nav class="site-nav">
+            <a href="../" class="home-link">
+                <img src="../MrLashmaths.png" alt="Mr Lash Maths - Home" class="nav-logo">
+            </a>
+        </nav>
+
         <h1>π Estimation Methods</h1>
 
         <div class="method-selector">

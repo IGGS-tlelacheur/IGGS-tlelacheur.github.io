@@ -330,10 +330,34 @@
                 grid-template-columns: repeat(2, 1fr);
             }
         }
+
+        .site-nav {
+            margin-bottom: 1.5rem;
+        }
+
+        .home-link {
+            display: inline-block;
+            transition: transform 0.2s ease;
+        }
+
+        .home-link:hover {
+            transform: scale(1.05);
+        }
+
+        .nav-logo {
+            height: 50px;
+            width: auto;
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        <nav class="site-nav">
+            <a href="../" class="home-link">
+                <img src="../MrLashmaths.png" alt="Mr Lash Maths - Home" class="nav-logo">
+            </a>
+        </nav>
+
         <header>
             <h1>Non-Transitive Dice</h1>
             <p class="subtitle">Explore the fascinating world of non-transitive probability with custom dice</p>

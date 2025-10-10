@@ -21,6 +21,25 @@
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
+
+        .site-nav {
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .home-link {
+            display: inline-block;
+            transition: transform 0.2s ease;
+        }
+
+        .home-link:hover {
+            transform: scale(1.05);
+        }
+
+        .nav-logo {
+            height: 50px;
+            width: auto;
+        }
         
         h1 {
             text-align: center;
@@ -176,6 +195,12 @@
 </head>
 <body>
     <div class="container">
+        <nav class="site-nav">
+            <a href="../" class="home-link">
+                <img src="../MrLashmaths.png" alt="Mr Lash Maths - Home" class="nav-logo">
+            </a>
+        </nav>
+
         <h1>Least Squares Regression Analysis</h1>
         
         <div class="instructions">
