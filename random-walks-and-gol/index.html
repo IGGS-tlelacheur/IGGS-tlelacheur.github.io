@@ -103,7 +103,7 @@
             border-radius: 0 0 8px 8px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             padding: 2rem;
-            min-height: 600px;
+            min-height: fit-content;
         }
 
         .tab-panel {
@@ -118,7 +118,7 @@
             display: grid;
             grid-template-columns: 300px 1fr;
             gap: 2rem;
-            height: 600px;
+            min-height: 600px;
         }
 
         .controls-panel {
@@ -650,8 +650,8 @@
 
             // Set canvas size to fit container properly
             const container = randomWalkState.canvas.parentElement;
-            const containerWidth = container.offsetWidth - 20; // Account for padding
-            const containerHeight = container.offsetHeight - 20;
+            const containerWidth = container.offsetWidth - 40; // Account for padding and border
+            const containerHeight = container.offsetHeight - 40; // Account for padding and border
             const aspectRatio = 4/3;
 
             let canvasWidth = Math.min(containerWidth, containerHeight * aspectRatio);
@@ -827,8 +827,8 @@
 
             // Set canvas size to fit container properly
             const container = gameOfLifeState.canvas.parentElement;
-            const containerWidth = container.offsetWidth - 20; // Account for padding
-            const containerHeight = container.offsetHeight - 20;
+            const containerWidth = container.offsetWidth - 40; // Account for padding and border
+            const containerHeight = container.offsetHeight - 40; // Account for padding and border
             const size = Math.min(containerWidth, containerHeight);
 
             gameOfLifeState.canvas.width = size;
@@ -858,8 +858,8 @@
         function changeGridSize() {
             // Recalculate canvas size to fit container
             const container = gameOfLifeState.canvas.parentElement;
-            const containerWidth = container.offsetWidth - 20;
-            const containerHeight = container.offsetHeight - 20;
+            const containerWidth = container.offsetWidth - 40; // Account for padding and border
+            const containerHeight = container.offsetHeight - 40; // Account for padding and border
             const canvasSize = Math.min(containerWidth, containerHeight);
 
             gameOfLifeState.canvas.width = canvasSize;
