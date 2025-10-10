@@ -531,7 +531,10 @@
                 if (tabName === 'random-walks') {
                     initRandomWalk();
                 } else if (tabName === 'game-of-life') {
-                    initGameOfLife();
+                    // Small delay to ensure container dimensions are available
+                    setTimeout(() => {
+                        initGameOfLife();
+                    }, 50);
                 }
             });
         });
@@ -853,6 +856,15 @@
         }
 
         function changeGridSize() {
+            // Recalculate canvas size to fit container
+            const container = gameOfLifeState.canvas.parentElement;
+            const containerWidth = container.offsetWidth - 20;
+            const containerHeight = container.offsetHeight - 20;
+            const canvasSize = Math.min(containerWidth, containerHeight);
+
+            gameOfLifeState.canvas.width = canvasSize;
+            gameOfLifeState.canvas.height = canvasSize;
+
             const size = parseInt(document.getElementById('gridSize').value);
             gameOfLifeState.gridWidth = size;
             gameOfLifeState.gridHeight = size;
