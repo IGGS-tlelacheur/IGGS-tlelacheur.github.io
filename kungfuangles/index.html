@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kung Fu Angles</title>
+<script src="https://unpkg.com/@ruffle-rs/ruffle"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            max-width: 1000px;
+            width: 100%;
+            backdrop-filter: blur(10px);
+        }
+
+        .site-nav {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            z-index: 1000;
+        }
+
+        .home-link {
+            display: inline-block;
+            transition: transform 0.2s ease;
+        }
+
+        .home-link:hover {
+            transform: scale(1.05);
+        }
+
+        .nav-logo {
+            height: 50px;
+            width: auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .game-container {
+            text-align: center;
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .instructions {
+            background: rgba(255, 193, 7, 0.1);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            color: #856404;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .instructions h3 {
+            margin-bottom: 10px;
+            color: #856404;
+        }
+
+        .instructions ul {
+            list-style-position: inside;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="site-nav">
+            <a href="../" class="home-link">
+                <img src="../MrLashmaths.png" alt="Mr Lash Maths - Home" class="nav-logo">
+            </a>
+        </nav>
+
+        <h1>🥋 Kung Fu Angles</h1>
+
+        <div class="instructions">
+            <h3>About Kung Fu Angles:</h3>
+            <ul>
+                <li>A BBC Key Skills game for estimating and measuring angles</li>
+                <li>Aim your Kung Fu kicks by judging acute, obtuse and reflex angles</li>
+                <li>Great for building a feel for angle sizes and using a protractor</li>
+            </ul>
+        </div>
+
+        <div class="game-container">
+            <embed src="kungfuangles.swf" width="100%" height="600" style="display: block;"/>
+        </div>
+    </div>
+
+    <script>
+        // Configure Ruffle so the Flash game plays in the browser without a Flash download
+        window.RufflePlayer = window.RufflePlayer || {};
+        window.RufflePlayer.config = {
+            "autoplay": "on",
+            "backgroundColor": "#000000",
+            "letterbox": "on",
+            "quality": "high",
+            "scale": "showAll"
+        };
+    </script>
+</body>
+</html>
