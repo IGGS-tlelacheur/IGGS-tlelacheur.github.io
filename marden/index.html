@@ -13,36 +13,43 @@
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script" async></script>
 <style>
   :root {
-    --bg: #faf9f6;
+    --bg: #f6f7fb;
+    --bg-grad-a: #eef2ff;
+    --bg-grad-b: #fdf2f8;
     --surface: #ffffff;
-    --surface-alt: #f1efe8;
-    --border: #d3d1c7;
-    --text: #2c2c2a;
-    --text-muted: #5f5e5a;
-    --text-dim: #888780;
-    --accent: #185fa5;
-    --accent-dark: #0c447c;
-    --ellipse: #0f6e56;
-    --ellipse-fill: rgba(15, 110, 86, 0.13);
-    --focus: #993c1d;
-    --danger: #a32d2d;
+    --surface-alt: #f0f1fa;
+    --border: #d8dbec;
+    --text: #1f2030;
+    --text-muted: #595b73;
+    --text-dim: #8a8ca3;
+    --accent: #4f46e5;
+    --accent-dark: #3730a3;
+    --ellipse: #0d9488;
+    --ellipse-fill: rgba(13, 148, 136, 0.15);
+    --focus: #e11d48;
+    --centroid: #f59e0b;
+    --danger: #dc2626;
     --radius: 8px;
     --radius-lg: 12px;
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #1a1a18;
-      --surface: #242421;
-      --surface-alt: #2c2c2a;
-      --border: #444441;
-      --text: #f1efe8;
-      --text-muted: #b4b2a9;
-      --text-dim: #888780;
-      --accent: #85b7eb;
-      --accent-dark: #b5d4f4;
-      --ellipse: #5dcaa5;
-      --ellipse-fill: rgba(93, 202, 165, 0.18);
-      --focus: #f0997b;
+      --bg: #15151f;
+      --bg-grad-a: #1b1b2e;
+      --bg-grad-b: #251a2a;
+      --surface: #20212e;
+      --surface-alt: #282a3a;
+      --border: #3a3c52;
+      --text: #ecedf7;
+      --text-muted: #b0b2c8;
+      --text-dim: #80819a;
+      --accent: #a5b4fc;
+      --accent-dark: #c7d2fe;
+      --ellipse: #2dd4bf;
+      --ellipse-fill: rgba(45, 212, 191, 0.20);
+      --focus: #fb7185;
+      --centroid: #fbbf24;
+      --danger: #f87171;
     }
   }
   * { box-sizing: border-box; }
@@ -50,6 +57,10 @@
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
     background: var(--bg);
+    background-image:
+      radial-gradient(1200px 600px at 0% -10%, var(--bg-grad-a), transparent 60%),
+      radial-gradient(1000px 500px at 100% 0%, var(--bg-grad-b), transparent 55%);
+    background-attachment: fixed;
     color: var(--text);
     line-height: 1.6;
     font-size: 15px;
@@ -62,9 +73,13 @@
   header { margin-bottom: 28px; }
   h1 {
     font-size: 26px;
-    font-weight: 500;
+    font-weight: 700;
     margin: 0 0 6px;
     letter-spacing: -0.01em;
+    background: linear-gradient(90deg, var(--accent), var(--ellipse) 55%, var(--focus));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
   }
   header p {
     margin: 0;
@@ -85,16 +100,21 @@
   }
   button {
     background: var(--surface);
-    border: 0.5px solid var(--border);
-    color: var(--text);
+    border: 1px solid var(--accent);
+    color: var(--accent-dark);
     padding: 6px 12px;
     font-size: 13px;
+    font-weight: 500;
     border-radius: var(--radius);
     cursor: pointer;
     font-family: inherit;
-    transition: background 0.12s;
+    transition: background 0.12s, color 0.12s, box-shadow 0.12s;
   }
-  button:hover { background: var(--surface-alt); }
+  button:hover {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25);
+  }
   button:active { transform: scale(0.98); }
 
   .vertex-grid {
@@ -110,11 +130,14 @@
     background: var(--surface-alt);
     border-radius: var(--radius-lg);
     padding: 14px 16px;
+    border-left: 3px solid var(--accent);
   }
+  .vertex-grid .panel { border-left-color: var(--accent); }
   .panel h3 {
     margin: 0 0 10px;
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 600;
+    color: var(--accent-dark);
   }
   .row {
     display: flex;
@@ -189,6 +212,22 @@
     border-radius: 2px;
     display: inline-block;
   }
+
+  .eqn-panel {
+    margin-top: 20px;
+    border-left: 3px solid var(--ellipse);
+  }
+  .eqn-note {
+    margin: 0 0 6px;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+  .eqn-display {
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 2px 0;
+  }
+  .eqn-display .err { color: var(--danger); font-family: ui-monospace, Menlo, monospace; }
 
   details {
     margin-top: 20px;
@@ -275,13 +314,19 @@
         <span><span class="swatch" style="background: var(--accent);"></span> Vertices</span>
         <span><span class="swatch" style="background: var(--ellipse);"></span> Inellipse</span>
         <span><span class="swatch" style="background: var(--focus);"></span> Foci</span>
-        <span><span class="swatch" style="background: var(--text-muted);"></span> Centroid</span>
+        <span><span class="swatch" style="background: var(--centroid);"></span> Centroid</span>
       </div>
     </div>
     <div class="panel">
       <h3>Results</h3>
       <div class="out" id="results"></div>
     </div>
+  </div>
+
+  <div class="panel eqn-panel" id="eqn-panel">
+    <h3>Cartesian equation of the inellipse</h3>
+    <p class="eqn-note">With $x = \operatorname{Re}(z)$ and $y = \operatorname{Im}(z)$. The rotated coordinates $X, Y$ are aligned with the major/minor axes and centred at the centroid $G$.</p>
+    <div id="equation" class="eqn-display"></div>
   </div>
 
   <details>
@@ -368,6 +413,44 @@ function computeFoci(A, B, C){
   ];
 }
 
+// General conic of the (rotated, translated) ellipse in the Cartesian Re–Im plane.
+// X²/a² + Y²/b² = 1 with X,Y rotated by theta about centre G=(gx,gy)
+// expands to  α x² + β xy + γ y² + δ x + ε y + ζ = 0.
+function ellipseConic(gx, gy, a, b, theta){
+  const c = Math.cos(theta), s = Math.sin(theta);
+  const ia2 = 1/(a*a), ib2 = 1/(b*b);
+  const alpha = c*c*ia2 + s*s*ib2;
+  const beta  = 2*c*s*(ia2 - ib2);
+  const gamma = s*s*ia2 + c*c*ib2;
+  const delta = -2*alpha*gx - beta*gy;
+  const eps   = -2*gamma*gy - beta*gx;
+  const zeta  = alpha*gx*gx + beta*gx*gy + gamma*gy*gy - 1;
+  return { alpha, beta, gamma, delta, eps, zeta };
+}
+
+// Join numeric polynomial terms into LaTeX with proper +/− signs.
+function polyLatex(terms){
+  let out = '';
+  terms.forEach(t => {
+    const v = t[0], sym = t[1];
+    if (Math.abs(v) < 1e-6) return;
+    const mag = Math.abs(v);
+    const sign = v < 0 ? '-' : '+';
+    let coef = (sym && Math.abs(mag - 1) < 1e-9) ? '' : fmt(mag);
+    const piece = coef + sym;
+    out += out === '' ? (v < 0 ? '-' + piece : piece) : ' ' + sign + ' ' + piece;
+  });
+  return out === '' ? '0' : out;
+}
+
+function renderEquation(html, isError){
+  const el = document.getElementById('equation');
+  el.innerHTML = isError ? '<span class="err">' + html + '</span>' : html;
+  if (!isError && window.MathJax && MathJax.typesetPromise){
+    MathJax.typesetPromise([el]).catch(()=>{});
+  }
+}
+
 function update(){
   const A = [parseFloat(document.getElementById('ax').value)||0, parseFloat(document.getElementById('ay').value)||0];
   const B = [parseFloat(document.getElementById('bx').value)||0, parseFloat(document.getElementById('by').value)||0];
@@ -376,6 +459,7 @@ function update(){
   const cross = (B[0]-A[0])*(C[1]-A[1]) - (B[1]-A[1])*(C[0]-A[0]);
   if (Math.abs(cross) < 1e-9) {
     document.getElementById('results').innerHTML = '<div class="err">Vertices are collinear — no inellipse exists.</div>';
+    renderEquation('Vertices are collinear — the inellipse is degenerate.', true);
     drawDegenerate(A, B, C);
     return;
   }
@@ -414,6 +498,30 @@ function update(){
     '<div><span class="lbl">Δ area:</span> ' + fmt(triArea) + '</div>' +
     '<div><span class="lbl">Ellipse area:</span> ' + fmt(ellipseArea) +
     ' <span style="color: var(--text-dim);">(ratio ' + fmt(ellipseArea/triArea) + ')</span></div>';
+
+  // Cartesian equation of the inellipse
+  const k = ellipseConic(G[0], G[1], semiMajor, semiMinor, theta);
+  const ct = Math.cos(theta), st = Math.sin(theta);
+  // "(x - g)" with a tidy sign, collapsing to "x" when g ≈ 0
+  const shift = (v, name) => {
+    if (Math.abs(v) < 1e-10) return name;
+    return '(' + name + (v < 0 ? ' + ' : ' - ') + fmt(Math.abs(v)) + ')';
+  };
+  const centred =
+    '\\frac{X^2}{' + fmt(semiMajor*semiMajor) + '} + \\frac{Y^2}{' + fmt(semiMinor*semiMinor) + '} = 1';
+  const Xdef = 'X = ' + shift(G[0],'x') + '(' + fmt(ct) + ') + ' + shift(G[1],'y') + '(' + fmt(st) + ')';
+  const Ydef = 'Y = -' + shift(G[0],'x') + '(' + fmt(st) + ') + ' + shift(G[1],'y') + '(' + fmt(ct) + ')';
+  const expanded = polyLatex([
+    [k.alpha, 'x^2'], [k.beta, 'xy'], [k.gamma, 'y^2'],
+    [k.delta, 'x'], [k.eps, 'y'], [k.zeta, '']
+  ]) + ' = 0';
+  renderEquation(
+    '$$' + centred + '$$' +
+    '$$\\begin{aligned} ' + Xdef + ' \\\\ ' + Ydef + ' \\end{aligned}$$' +
+    '<p class="eqn-note" style="margin-top:10px;">Expanded into a single conic:</p>' +
+    '$$' + expanded + '$$',
+    false
+  );
 
   drawScene(A, B, C, f1, f2, G, semiMajor, semiMinor, theta);
 }
@@ -462,6 +570,7 @@ function drawScene(A, B, C, f1, f2, G, a, b, theta){
   const cEllipse = getCss('--ellipse');
   const cEllipseFill = getCss('--ellipse-fill');
   const cFocus = getCss('--focus');
+  const cCentroid = getCss('--centroid');
 
   const tick = niceStep(vb.span / 6);
 
@@ -546,8 +655,8 @@ function drawScene(A, B, C, f1, f2, G, a, b, theta){
   });
 
   // centroid
-  parts.push('<circle cx="'+cx+'" cy="'+cy+'" r="2.5" fill="'+cMuted+'"/>');
-  parts.push('<text x="'+(cx+9)+'" y="'+(cy-5)+'" font-family="serif" font-style="italic" font-size="12" fill="'+cMuted+'">G</text>');
+  parts.push('<circle cx="'+cx+'" cy="'+cy+'" r="3" fill="'+cCentroid+'" stroke="#fff" stroke-width="0.6"/>');
+  parts.push('<text x="'+(cx+9)+'" y="'+(cy-5)+'" font-family="serif" font-style="italic" font-size="12" font-weight="600" fill="'+cCentroid+'">G</text>');
 
   // foci labels
   parts.push('<text x="'+(vb.sx(f1[0])+9)+'" y="'+(vb.sy(f1[1])-5)+'" font-family="serif" font-style="italic" font-size="12" fill="'+cFocus+'">F₁</text>');
